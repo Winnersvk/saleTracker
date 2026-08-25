@@ -12,12 +12,15 @@ const TYPE_BADGE: Record<string, string> = {
   REPEAT: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
+const PAGE_SIZE = 50;
+
 export default function CustomersClient() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [segmentFilter, setSegmentFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -45,6 +48,13 @@ export default function CustomersClient() {
       return true;
     });
   }, [customers, search, typeFilter, segmentFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, typeFilter, segmentFilter]);
 
   function openCreate() {
     setSelectedId(null);
@@ -132,7 +142,7 @@ export default function CustomersClient() {
                 </tr>
               )}
               {!loading &&
-                filtered.slice(0, 200).map((c) => (
+                pageRows.map((c) => (
                   <tr
                     key={c.id}
                     onClick={() => openEdit(c.id)}
@@ -162,10 +172,26 @@ export default function CustomersClient() {
             </tbody>
           </table>
         </div>
-        {filtered.length > 200 && (
-          <p className="text-xs text-slate-400 text-center py-3 border-t border-slate-200">
-            แสดง 200 รายการแรก - ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์
-          </p>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 text-sm">
+            <span className="text-slate-500">หน้า {page} จาก {totalPages}</span>
+            <div className="flex gap-2">
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+              >
+                ก่อนหน้า
+              </button>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
         )}
       </Card>
 

@@ -4,13 +4,34 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SessionPayload } from "@/lib/auth";
+import { ROLE_LABELS } from "@/lib/pipeline";
+import NotificationBell from "@/components/NotificationBell";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "แดชบอร์ด", icon: "📊" },
-  { href: "/tracker", label: "ตารางติดตามงาน", icon: "📋" },
-  { href: "/kanban", label: "บอร์ดสถานะ", icon: "🗂️" },
-  { href: "/settings", label: "ตั้งค่า", icon: "⚙️" },
-];
+const ALL_NAV_ITEMS = [
+  { href: "/dashboard", label: "My Dashboard", icon: "📊", roles: null },
+  { href: "/opportunities", label: "โอกาสขาย", icon: "📋", roles: null },
+  { href: "/pipeline", label: "Pipeline", icon: "🗂️", roles: null },
+  { href: "/customers", label: "ลูกค้า", icon: "🧑‍💼", roles: null },
+  {
+    href: "/team-dashboard",
+    label: "Team Dashboard",
+    icon: "👥",
+    roles: ["SALES_MANAGER", "MANAGEMENT", "ADMIN"],
+  },
+  {
+    href: "/executive-dashboard",
+    label: "Executive Dashboard",
+    icon: "📈",
+    roles: ["MANAGEMENT", "ADMIN"],
+  },
+  {
+    href: "/audit-log",
+    label: "Audit Log",
+    icon: "🕘",
+    roles: ["MANAGEMENT", "ADMIN"],
+  },
+  { href: "/settings", label: "ตั้งค่า", icon: "⚙️", roles: ["MANAGEMENT", "ADMIN"] },
+] as const;
 
 export default function NavShell({
   session,
@@ -22,6 +43,10 @@ export default function NavShell({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = ALL_NAV_ITEMS.filter(
+    (item) => !item.roles || (item.roles as readonly string[]).includes(session.role)
+  );
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -38,13 +63,13 @@ export default function NavShell({
             W
           </div>
           <span className="font-semibold text-slate-900 text-sm leading-tight">
-            Winner Sale
+            Winner Sales
             <br />
             Tracker
           </span>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map((item) => {
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(item.href + "/");
             return (
@@ -68,9 +93,7 @@ export default function NavShell({
             <p className="text-sm font-medium text-slate-900">
               {session.name}
             </p>
-            <p className="text-xs text-slate-500">
-              {session.role === "ADMIN" ? "ผู้ดูแลระบบ" : "พนักงานขาย"}
-            </p>
+            <p className="text-xs text-slate-500">{ROLE_LABELS[session.role]}</p>
           </div>
           <button
             onClick={logout}
@@ -87,18 +110,21 @@ export default function NavShell({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-bold">
             W
           </div>
-          <span className="font-semibold text-sm">Winner Sale Tracker</span>
+          <span className="font-semibold text-sm">Winner Sales Tracker</span>
         </div>
-        <button
-          onClick={() => setMobileOpen((v) => !v)}
-          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm"
-        >
-          เมนู
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm"
+          >
+            เมนู
+          </button>
+        </div>
       </div>
       {mobileOpen && (
-        <div className="md:hidden fixed top-14 inset-x-0 bg-white border-b border-slate-200 z-30 px-4 py-3 space-y-1">
-          {NAV_ITEMS.map((item) => (
+        <div className="md:hidden fixed top-14 inset-x-0 bg-white border-b border-slate-200 z-30 px-4 py-3 space-y-1 max-h-[80vh] overflow-y-auto">
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -119,7 +145,10 @@ export default function NavShell({
       )}
 
       <main className="flex-1 min-w-0 md:pt-0 pt-14">
-        <div className="p-4 md:p-8 max-w-[1600px] mx-auto">{children}</div>
+        <div className="hidden md:flex items-center justify-end px-8 pt-4">
+          <NotificationBell />
+        </div>
+        <div className="p-4 md:px-8 md:pb-8 md:pt-2 max-w-[1600px] mx-auto">{children}</div>
       </main>
     </div>
   );

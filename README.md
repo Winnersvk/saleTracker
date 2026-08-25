@@ -1,72 +1,116 @@
-# Winner Sale Tracker
+# Winner Sales Tracker
 
-ระบบติดตามการขายลูกค้า (Sale Tracker) สำหรับ Winner Sign — สร้างขึ้นจากไฟล์ Excel
-`AoyWinnerTracker.xlsx` เดิม โดยยังคงโครงสร้างข้อมูลหลักไว้ (ลูกค้า/งาน, ประเภทงาน,
-ช่องทางติดต่อ, สถานะ, จำนวนครั้งที่ติดตาม, หมายเหตุ) พร้อมเพิ่มความสามารถที่ Excel
-ทำได้ยากหรือทำไม่ได้เลย เพื่อให้ทีมขายทำงานได้เร็วและแม่นยำขึ้น
+ระบบ **Sales Control Center** สำหรับ Winner Sign ตามสเปก *"WINNER Sales
+Tracker — Master System Specification V1.0"* บริหารกระบวนการขายตั้งแต่ลูกค้า
+เริ่มสอบถามจนถึงปิดการขาย โดยแยกหน้าที่ตามสเปกไว้ชัดเจน:
 
-ข้อมูลลูกค้าทั้ง 865 รายการจากไฟล์ Excel เดิมถูกนำเข้าไว้ในระบบแล้วผ่าน seed script
-(ดูหัวข้อ "เริ่มต้นใช้งาน" ด้านล่าง)
+- **PEAK Account** — บัญชี, ใบเสนอราคา (ทางการ), Invoice, Payment — ระบบนี้
+  **ไม่ได้แทนที่** PEAK และไม่มีการเชื่อมต่อ API จริงในเวอร์ชันนี้ (ไม่มี
+  credentials ให้ในโปรเจกต์) ฟิลด์ที่เกี่ยวกับ PEAK (เช่น PEAK Customer ID,
+  มูลค่าใบเสนอราคา) จึงเป็นการกรอกข้อมูลเองไปพลางก่อน เพื่อให้โครงสร้างข้อมูล
+  พร้อมเชื่อมต่อจริงในอนาคตโดยไม่ต้อง migrate schema ใหม่
+- **Winner Sales Tracker (ระบบนี้)** — Lead/Opportunity/Pipeline/Activity/
+  Follow-up/Lead Source/Lost Reason/Sales Performance/Dashboard
+- **WINFLOW** — Job/Design/Production/QC/Delivery — ระบบนี้เก็บแค่สถานะย่อ
+  (WinflowJob) เป็น mirror ให้ฝ่ายขายเห็นความคืบหน้าคร่าวๆ เท่านั้น ไม่มีการ
+  เชื่อมต่อ API จริงเช่นกัน
 
-## สิ่งที่เพิ่มเติมจาก Excel เดิม (และทำไมถึงช่วยเพิ่มประสิทธิภาพ)
+ข้อมูลลูกค้า/งานขายจากไฟล์ Excel เดิม (`AoyWinnerTracker.xlsx`) ถูกนำเข้า
+เป็น **502 ลูกค้า (Customer) และ 865 โอกาสขาย (Opportunity)** แล้ว (ดูหัวข้อ
+"เริ่มต้นใช้งาน")
 
-1. **แดชบอร์ดสรุปภาพรวมแบบเรียลไทม์** — จำนวนงานทั้งหมด/เสร็จแล้ว/เลยกำหนด,
-   อัตราปิดการขาย (conversion rate), กราฟสัดส่วนตามสถานะ/ประเภทงาน,
-   ประสิทธิภาพตามช่องทางติดต่อ (ช่องทางไหนปิดการขายได้ดีที่สุด), แนวโน้มงานใหม่
-   รายสัปดาห์ และอันดับพนักงานขาย — ข้อมูลเหล่านี้ต้องคำนวณเองใน Excel และไม่อัปเดต
-   อัตโนมัติ
-2. **วันที่นัดติดตามครั้งถัดไป + ตัวเตือนงานเลยกำหนด/ครบกำหนดวันนี้**
-   (Next follow-up date) — Excel มีแค่ "ผ่านมากี่วัน" แต่ไม่มีการนัดหมายล่วงหน้า
-   ทำให้พลาดจังหวะติดตามลูกค้าได้ง่าย ระบบนี้ไฮไลต์แถวสีแดง/เหลืองอัตโนมัติเมื่อ
-   เลยกำหนดหรือครบกำหนดวันนี้
-3. **ประวัติการติดตามแบบ timeline แทนตัวเลขนับครั้ง** — เดิม Excel เก็บแค่ตัวเลข
-   "1-5 ครั้ง" ไม่รู้ว่าติดต่อวันไหน คุยอะไรไปบ้าง ระบบใหม่บันทึกทุกครั้งที่ติดตาม
-   พร้อมวันที่ บันทึกข้อความ และผู้ติดตาม ทำให้พนักงานคนอื่นรับช่วงงานต่อได้ทันที
-4. **มอบหมายผู้ดูแลลูกค้าต่อรายการ (หลายพนักงานขาย)** — Excel เดิมมีแอดมินคนเดียว
-   (AOY) ระบบใหม่รองรับทีมขายหลายคน พร้อมแยกสิทธิ์ผู้ดูแลระบบ/พนักงานขาย และมี
-   ตารางอันดับผลงานเปรียบเทียบกันได้
-5. **บอร์ดสถานะ (Kanban)** — ลากลูกค้าข้ามคอลัมน์เพื่อเปลี่ยนสถานะ
-   (เสนอราคา → กำลังติดต่อ → สั่งงานแล้ว/บ่สั่งงาน) เห็นภาพรวม pipeline ได้ในหน้าเดียว
-6. **ค้นหา + กรองหลายเงื่อนไขพร้อมกัน** — ค้นหาชื่อ/เบอร์โทร/หมายเหตุ, กรองตาม
-   สถานะ, ประเภทงาน, ช่องทาง, ความสำคัญ, ผู้ดูแล, และงานที่เลยกำหนดติดตาม ได้ทันที
-   โดยไม่ต้องตั้ง filter/formula เองแบบใน Excel
-7. **ตั้งค่าประเภทงาน/ช่องทางติดต่อได้เองผ่านหน้าเว็บ** — แทนที่การแก้ Sheet "Setup"
-   ตรง ๆ ซึ่งเสี่ยงพิมพ์ผิดหรือลบข้อมูลอ้างอิงโดยไม่ตั้งใจ
-8. **ระบบผู้ใช้งาน + สิทธิ์การเข้าถึง (Login)** — ป้องกันไม่ให้ใครก็ได้แก้ไข/ลบข้อมูล
-   ลูกค้าได้ตามใจ และรู้ว่าใครเป็นคนแก้ไขอะไร
-9. **เบอร์โทรลูกค้า** — เพิ่มฟิลด์ที่ Excel เดิมไม่มี ช่วยให้โทรติดต่อได้จากในระบบ
-   โดยไม่ต้องเปิดแชทหา
-10. **ส่งออกเป็น CSV/Excel ได้ตลอดเวลา** — ยังคงใช้ Excel/Google Sheets วิเคราะห์เพิ่ม
-    เติมได้ตามต้องการ ไม่ผูกติดกับระบบใหม่
-11. **ใช้งานได้บนมือถือ** — พนักงานขายที่ออกพบลูกค้านอกสถานที่บันทึกข้อมูลผ่านมือถือ
-    ได้ทันที ไม่ต้องรอกลับมาเปิดคอมพิวเตอร์แก้ Excel
+## Business Flow ที่ระบบรองรับ
 
-### แนวทางที่แนะนำให้พัฒนาต่อ (ยังไม่ได้ทำในเวอร์ชันนี้)
+```
+Customer Inquiry → New Lead → Contacted → Requirement → Estimating
+→ Quotation Sent → Follow-up → Negotiation → Waiting Approval
+→ Won / Lost / On Hold
+```
 
-- แจ้งเตือนผ่าน LINE Notify/Email เมื่อถึงวันนัดติดตามลูกค้า
-- แนบไฟล์ใบเสนอราคา/รูปภาพหน้างานในแต่ละรายการ
-- ระบบแจ้งเตือนลูกค้าซ้ำ (ตรวจชื่อ/เบอร์โทรซ้ำก่อนสร้างรายการใหม่)
-- Sync ปฏิทินนัดหมายกับ Google Calendar
+เมื่อ Won แล้วสามารถสร้าง/อัปเดตสถานะงานฝั่ง WINFLOW แบบย่อได้จากหน้ารายละเอียด
+โอกาสขายโดยตรง
+
+> **หมายเหตุการออกแบบ:** สเปกต้นฉบับแยก "Lead" กับ "Opportunity" เป็นสอง
+> concept แต่ทุกฟิลด์ของ Lead (Lead Source, Contact Channel, Interested
+> Product, Temperature) ก็เป็นฟิลด์ของ Opportunity อยู่แล้ว และ Stage แรกของ
+> Pipeline ("New Lead") ก็คือนิยามของ Lead อยู่แล้วในตัว ระบบนี้จึงรวมสอง
+> concept เป็นตารางเดียว (`Opportunity`) เพื่อไม่ต้องมีขั้นตอน "แปลง Lead เป็น
+> Opportunity" ที่ข้อมูลจริงของบริษัทไม่มี concept นี้อยู่แล้ว — ตรงกับหลักการ
+> "Simple for Sales" ของสเปกเอง (ข้อ 59)
+
+## Scope ที่ implement แล้ว (V1 Must Have — สเปกข้อ 52)
+
+| # | Feature ตามสเปก | สถานะ |
+| - | --- | --- |
+| 1-4 | Customer, Lead, Opportunity, Sales Owner | ✅ |
+| 5 | Pipeline (11 stage เต็มตามข้อ 11) | ✅ |
+| 6-8 | Product Type, Lead Source, Contact Channel (master แยกกัน) | ✅ |
+| 9-10 | Activity, Last Contact | ✅ (Activity Timeline) |
+| 11-13 | Next Follow-up, Next Action, Overdue (4 ระดับตามข้อ 15) | ✅ |
+| 14 | Hot/Warm/Cold Temperature | ✅ |
+| 15-16 | PEAK Customer/Quotation Link | ✅ ฟิลด์พร้อม แต่เป็น manual entry (ไม่มี live API) |
+| 17-18 | Quotation Value, Quotation Aging | ✅ |
+| 19-21 | Won, Lost, Lost Reason (บังคับกรอกเมื่อ Lost) | ✅ |
+| 22-24 | Sales / Manager / Executive Dashboard | ✅ |
+| 25 | User Permission (4 roles) | ✅ |
+| 26-27 | Search / Filter | ✅ |
+| 28 | Audit Log | ✅ (Stage, Sales Owner, Won/Lost) |
+
+เพิ่มเติมนอกเหนือ Must Have ที่ทำไปด้วยเพราะอยู่ใน flow เดียวกัน: Stage/
+Assignment History, Probability & Weighted Pipeline (ข้อ 19-20), Sales
+Funnel & Conversion Metrics (ข้อ 33-34), No Activity Report, Lead
+Source/Product/Customer Performance, In-app Notifications (ข้อ 47)
+
+### ยังไม่ทำ (ตรงตามที่สเปกกำหนดไว้เป็น V1.5/V2 อยู่แล้ว — ข้อ 53-54)
+
+- **PEAK/WINFLOW API sync จริง** — ไม่มี credentials ให้ในงานนี้ ฟิลด์ทั้งหมด
+  พร้อมสำหรับต่อ API จริงในอนาคต (ดู `IntegrationSyncLog` แนวคิดในสเปกข้อ 49
+  — ยังไม่ได้สร้างตารางนี้เพราะไม่มี integration จริงให้ sync)
+- LINE/Email/Push Notification (มีเฉพาะ in-app ตามที่สเปกกำหนดไว้สำหรับ V1)
+- Automatic Lead Score, Weighted Forecast ขั้นสูง, Customer Dormant
+  auto-reminder, Sales Target/Commission, Sales Territory, Mobile App
+
+## Business Flow → Module Map
+
+| Module (สเปกข้อ 4) | อยู่ในระบบตรงไหน |
+| --- | --- |
+| 1. Customer | หน้า **ลูกค้า** + `Customer` model |
+| 2-3. Lead / Opportunity | หน้า **โอกาสขาย** + `Opportunity` model (ดูหมายเหตุด้านบน) |
+| 4. Pipeline | หน้า **Pipeline** (Kanban 11 stage) |
+| 5. Activity & Follow-up | Activity Timeline ในหน้ารายละเอียดโอกาสขาย |
+| 6. PEAK Integration | ฟิลด์ PEAK Customer ID / Quotation (manual) |
+| 7. Dashboard & Analytics | **My / Team / Executive Dashboard** |
+| 8. User/Team/Permission | หน้า **ตั้งค่า → ทีมขาย / ผู้ใช้งาน** |
+| 9. WINFLOW Integration | ส่วน WINFLOW ในหน้ารายละเอียดโอกาสขาย (เฉพาะ Won) |
+
+## Role & Permission (สเปกข้อ 30)
+
+| Role | เข้าถึงข้อมูล | ทำอะไรได้ |
+| --- | --- | --- |
+| **SALES** | เฉพาะ Opportunity ของตัวเอง | Follow-up, เปลี่ยน Stage, เพิ่ม Activity/Quotation |
+| **SALES_MANAGER** | ทั้งทีม (ตาม Team ที่สังกัด) | ข้างต้น + Assign/Transfer, ดู Team Dashboard |
+| **MANAGEMENT** | ทุกทีม (อ่านอย่างเดียวสำหรับ master) | ดู Executive Dashboard, ปรับ Probability Master |
+| **ADMIN** | ทุกทีม | จัดการ User/Master/Team/Permission ทั้งหมด |
 
 ## เทคโนโลยีที่ใช้
 
 - [Next.js 16](https://nextjs.org) (App Router) + TypeScript + Tailwind CSS
-- [Prisma](https://www.prisma.io) + SQLite (ไฟล์ฐานข้อมูลเดียว ไม่ต้องติดตั้ง DB
-  server แยก เหมาะกับการใช้งานภายในองค์กรขนาดเล็ก — เปลี่ยนไปใช้ PostgreSQL/MySQL
-  ภายหลังได้ง่ายผ่าน Prisma)
-- Recharts สำหรับกราฟในแดชบอร์ด
-- ระบบยืนยันตัวตนแบบ session cookie + JWT (jose) และรหัสผ่านเข้ารหัสด้วย bcrypt
+- [Prisma](https://www.prisma.io) + SQLite (ไฟล์ฐานข้อมูลเดียว เหมาะกับ
+  องค์กรขนาดเล็ก — ย้ายไป PostgreSQL/MySQL ภายหลังได้ง่ายผ่าน Prisma)
+- Recharts สำหรับกราฟในทุกแดชบอร์ด
+- Session cookie + JWT (jose), รหัสผ่านเข้ารหัสด้วย bcrypt
 
 ## เริ่มต้นใช้งาน (Local Development)
 
 ```bash
-npm install                 # ติดตั้ง dependencies (จะรัน `prisma generate` ให้อัตโนมัติ)
+npm install                 # ติดตั้ง dependencies (รัน `prisma generate` อัตโนมัติ)
 cp .env.example .env        # ตั้งค่า DATABASE_URL และ SESSION_SECRET
-# สร้าง SESSION_SECRET แบบสุ่ม:
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"  # สุ่ม SESSION_SECRET
 
 npm run db:push             # สร้างตารางฐานข้อมูลตาม prisma/schema.prisma
-npm run db:seed             # นำเข้าข้อมูลลูกค้าจากไฟล์ Excel เดิม (865 รายการ) + สร้างผู้ใช้ AOY
+npm run db:seed             # นำเข้าลูกค้า/โอกาสขายจาก Excel เดิม + สร้างผู้ใช้ AOY
+                             # (รันซ้ำได้ปลอดภัย - จะล้างข้อมูลลูกค้า/โอกาสขาย
+                             #  ที่นำเข้าไว้ก่อนแล้วนำเข้าใหม่ทุกครั้ง)
 
 npm run dev                 # เปิดเซิร์ฟเวอร์ที่ http://localhost:3000
 ```
@@ -77,11 +121,11 @@ npm run dev                 # เปิดเซิร์ฟเวอร์ท�
 | --- | --- | --- |
 | `aoy@winnersign.local` | `Winner2026!` | ผู้ดูแลระบบ (ADMIN) |
 
-> **สำคัญ:** เปลี่ยนรหัสผ่านทันทีหลังเข้าสู่ระบบครั้งแรก (หน้า ตั้งค่า → ผู้ใช้งานระบบ)
-> หรือกำหนดรหัสผ่านของ seed เองผ่านตัวแปรแวดล้อม `SEED_ADMIN_PASSWORD` ก่อนรัน
-> `npm run db:seed`
+> **สำคัญ:** เปลี่ยนรหัสผ่านทันทีหลังเข้าสู่ระบบครั้งแรก (ตั้งค่า → ผู้ใช้งาน)
+> หรือกำหนดรหัสผ่านของ seed เองผ่าน `SEED_ADMIN_PASSWORD` ก่อนรัน `npm run db:seed`
 
-หลังจากนั้นสามารถเพิ่มพนักงานขายคนอื่น ๆ ได้จากหน้า **ตั้งค่า** (เฉพาะผู้ดูแลระบบ)
+เพิ่มพนักงานขาย/หัวหน้าทีม/ผู้บริหารคนอื่น ๆ ได้จากหน้า **ตั้งค่า → ผู้ใช้งาน**
+(เฉพาะ ADMIN)
 
 ## คำสั่งที่ใช้บ่อย
 
@@ -91,19 +135,27 @@ npm run dev                 # เปิดเซิร์ฟเวอร์ท�
 | `npm run build` | build สำหรับ production |
 | `npm run start` | รันเซิร์ฟเวอร์ production (ต้อง build ก่อน) |
 | `npm run db:push` | sync schema กับฐานข้อมูล SQLite |
-| `npm run db:seed` | นำเข้าข้อมูลตั้งต้นจาก `prisma/seed-data.json` |
+| `npm run db:seed` | นำเข้าข้อมูลตั้งต้นจาก `prisma/seed-data.json` (ปลอดภัยรันซ้ำ) |
 | `npm run db:studio` | เปิด Prisma Studio ดู/แก้ข้อมูลในฐานข้อมูลโดยตรง |
 
 ## โครงสร้างหน้าเว็บหลัก
 
-- `/dashboard` — ภาพรวมและกราฟสรุปผล
-- `/tracker` — ตารางติดตามงานขาย (ค้นหา/กรอง/เพิ่ม/แก้ไข/ลบ/export CSV)
-- `/kanban` — บอร์ดสถานะงานแบบลากวาง
-- `/settings` — จัดการประเภทงาน, ช่องทางติดต่อ, ผู้ใช้งาน (เฉพาะผู้ดูแลระบบ)
+- `/dashboard` — **My Dashboard**: วันนี้ต้องทำอะไร (ทุก role)
+- `/opportunities` — ตารางโอกาสขาย ค้นหา/กรอง/เพิ่ม/แก้ไข/ลบ
+- `/pipeline` — Pipeline แบบ Kanban 11 stage ลากเปลี่ยนสถานะ
+- `/customers` — ทะเบียนลูกค้า
+- `/team-dashboard` — **Team Dashboard** (SALES_MANAGER ขึ้นไป)
+- `/executive-dashboard` — **Executive Dashboard** (MANAGEMENT ขึ้นไป)
+- `/audit-log` — ประวัติการเปลี่ยนแปลงข้อมูลสำคัญ (MANAGEMENT ขึ้นไป)
+- `/settings` — Master Data, ทีมขาย, Probability, ผู้ใช้งาน (ADMIN/MANAGEMENT)
 
 ## หมายเหตุด้านข้อมูล
 
-ไฟล์ `prisma/seed-data.json` คือข้อมูลที่แปลงมาจาก `AoyWinnerTracker.xlsx` (sheet
-"Assignment" และ "Setup") ใช้สำหรับ `npm run db:seed` เท่านั้น ฐานข้อมูลจริง
-(`prisma/dev.db`) จะไม่ถูก commit เข้า git (อยู่ใน `.gitignore`) — หากต้องการย้ายไป
-ใช้งานจริงบนเซิร์ฟเวอร์ ให้รัน `db:push` และ `db:seed` บนเครื่อง/เซิร์ฟเวอร์ปลายทางอีกครั้ง
+- ไฟล์ Excel เดิมไม่มีฟิลด์มูลค่าเงิน (ราคา/ใบเสนอราคา) จึงนำเข้ามาโดยไม่มี
+  `estimatedValue`/`Quotation` — ตัวเลข Pipeline Value, Won Value, Weighted
+  Pipeline ในแดชบอร์ดจะเป็น 0 จนกว่าฝ่ายขายจะเริ่มกรอกมูลค่าจริงของแต่ละ
+  โอกาสขายไปข้างหน้า
+- `prisma/seed-data.json` คือข้อมูลที่แปลงมาจาก `AoyWinnerTracker.xlsx` ใช้
+  สำหรับ `npm run db:seed` เท่านั้น ฐานข้อมูลจริง (`prisma/dev.db`) จะไม่ถูก
+  commit เข้า git (`.gitignore`) — ย้ายไปใช้งานจริงบนเซิร์ฟเวอร์อื่นให้รัน
+  `db:push` และ `db:seed` อีกครั้งบนเครื่องปลายทาง

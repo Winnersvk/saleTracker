@@ -57,6 +57,10 @@ function parseFollowUpCount(raw: string | null): number {
 }
 
 async function main() {
+  console.log("Clearing previously imported customers/opportunities (safe to re-run)...");
+  await prisma.opportunity.deleteMany({});
+  await prisma.customer.deleteMany({});
+
   console.log("Seeding team + admin user...");
   const team = await prisma.team.upsert({
     where: { name: "ทีมขาย Winner Sign" },
