@@ -78,6 +78,40 @@ export default function ManagerDashboardClient() {
       </Card>
 
       <Card className="p-4">
+        <h2 className="text-sm font-semibold text-slate-900 mb-1">เปรียบเทียบพนักงานขาย (Won Value)</h2>
+        <p className="text-xs text-slate-400 mb-3">คลิกที่แท่งกราฟเพื่อดูรายละเอียดรายบุคคล</p>
+        <ResponsiveContainer
+          width="100%"
+          height={Math.max(
+            160,
+            stats.salesPerformance.filter((r) => r.userId !== "unassigned").length * 40
+          )}
+        >
+          <BarChart
+            data={stats.salesPerformance.filter((r) => r.userId !== "unassigned")}
+            layout="vertical"
+            margin={{ left: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+            <XAxis type="number" tick={{ fontSize: 11 }} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+            <Tooltip />
+            <Bar
+              dataKey="wonValue"
+              name="Won Value"
+              fill="#10b981"
+              radius={[0, 4, 4, 0]}
+              cursor="pointer"
+              onClick={(data) => {
+                const userId = (data as { payload?: { userId?: string } }).payload?.userId;
+                if (userId) router.push(`/rep/${userId}`);
+              }}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-4">
         <h2 className="text-sm font-semibold text-slate-900 mb-3">Sales Performance</h2>
         <p className="text-xs text-slate-400 mb-2">คลิกที่ชื่อพนักงานเพื่อดูรายละเอียดรายบุคคล</p>
         <div className="overflow-x-auto">

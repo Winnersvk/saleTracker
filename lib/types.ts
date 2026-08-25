@@ -226,6 +226,15 @@ export type ExecutiveDashboardStats = {
     wonValue: number;
     avgDeal: number;
   }[];
+  repPerformance: {
+    userId: string;
+    name: string;
+    opportunities: number;
+    won: number;
+    lost: number;
+    winRate: number;
+    wonValue: number;
+  }[];
   customerPerformance: {
     newCustomers: number;
     existingCustomers: number;
@@ -234,6 +243,7 @@ export type ExecutiveDashboardStats = {
     topCustomers: { id: string; name: string; wonValue: number; opportunities: number }[];
     dormantCustomers: { id: string; name: string; lastActivityDate: string | null }[];
   };
+  reps: UserLite[];
 };
 
 export type RepDashboardStats = {

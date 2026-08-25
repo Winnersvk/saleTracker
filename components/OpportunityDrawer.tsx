@@ -872,9 +872,11 @@ export default function OpportunityDrawer({
                 </div>
               )}
 
-              {canReassign && (
+              {(canReassign || opportunity.salesOwnerId === currentUserId) && (
                 <div className="border-t border-slate-200 pt-4">
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">มอบหมายใหม่</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                    {canReassign ? "มอบหมายใหม่" : "โอนงานให้เพื่อนร่วมทีม"}
+                  </h3>
                   <form onSubmit={handleReassign} className="flex gap-2">
                     <select
                       value={reassignTo}

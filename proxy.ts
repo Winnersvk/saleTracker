@@ -9,6 +9,9 @@ export async function proxy(req: NextRequest) {
   if (
     PUBLIC_PATHS.includes(pathname) ||
     pathname.startsWith("/api/auth/login") ||
+    // Called by an external scheduler with no session cookie - the route
+    // itself checks a shared secret (CRON_SECRET) instead.
+    pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
   ) {

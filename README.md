@@ -59,14 +59,20 @@ Customer Inquiry → New Lead → Contacted → Requirement → Estimating
 เพิ่มเติมนอกเหนือ Must Have ที่ทำไปด้วยเพราะอยู่ใน flow เดียวกัน: Stage/
 Assignment History, Probability & Weighted Pipeline (ข้อ 19-20), Sales
 Funnel & Conversion Metrics (ข้อ 33-34), No Activity Report, Lead
-Source/Product/Customer Performance, In-app Notifications (ข้อ 47)
+Source/Product/Customer Performance, In-app Notifications (ข้อ 47),
+**หน้ารายละเอียดพนักงานขายรายบุคคล** (`/rep/[userId]`) พร้อม KPI ตามข้อ 55
+(Win Rate, Lead/Quote Conversion, Follow-up Completion, Average Deal
+Size, Average Sales Cycle), **ตัวกรองช่วงเวลา + พนักงานขาย** บน Executive
+Dashboard (ข้อ 41), **การโอนงานด้วยตนเอง** สำหรับพนักงานขาย (ข้อ 29 ขยายสิทธิ์
+ให้เจ้าของงานโอนงานของตัวเองได้ ไม่ต้องรอหัวหน้าทีม), และ **แจ้งเตือน LINE
+สรุปยอดขายประจำวัน** ผ่าน LINE Messaging API (ดูหัวข้อด้านล่าง)
 
 ### ยังไม่ทำ (ตรงตามที่สเปกกำหนดไว้เป็น V1.5/V2 อยู่แล้ว — ข้อ 53-54)
 
 - **PEAK/WINFLOW API sync จริง** — ไม่มี credentials ให้ในงานนี้ ฟิลด์ทั้งหมด
   พร้อมสำหรับต่อ API จริงในอนาคต (ดู `IntegrationSyncLog` แนวคิดในสเปกข้อ 49
   — ยังไม่ได้สร้างตารางนี้เพราะไม่มี integration จริงให้ sync)
-- LINE/Email/Push Notification (มีเฉพาะ in-app ตามที่สเปกกำหนดไว้สำหรับ V1)
+- Email/Push Notification (มี in-app + LINE แล้ว ตามที่ขอเพิ่มเติม)
 - Automatic Lead Score, Weighted Forecast ขั้นสูง, Customer Dormant
   auto-reminder, Sales Target/Commission, Sales Territory, Mobile App
 
@@ -140,14 +146,60 @@ npm run dev                 # เปิดเซิร์ฟเวอร์ท�
 
 ## โครงสร้างหน้าเว็บหลัก
 
-- `/dashboard` — **My Dashboard**: วันนี้ต้องทำอะไร (ทุก role)
-- `/opportunities` — ตารางโอกาสขาย ค้นหา/กรอง/เพิ่ม/แก้ไข/ลบ
+- `/dashboard` — **My Dashboard**: วันนี้ต้องทำอะไร (ทุก role, เห็นเฉพาะงานตัวเอง)
+- `/opportunities` — ตารางโอกาสขาย ค้นหา/กรอง/เพิ่ม/แก้ไข/ลบ/โอนงาน
 - `/pipeline` — Pipeline แบบ Kanban 11 stage ลากเปลี่ยนสถานะ
 - `/customers` — ทะเบียนลูกค้า
-- `/team-dashboard` — **Team Dashboard** (SALES_MANAGER ขึ้นไป)
-- `/executive-dashboard` — **Executive Dashboard** (MANAGEMENT ขึ้นไป)
+- `/team-dashboard` — **Team Dashboard** พร้อมกราฟเปรียบเทียบพนักงานขาย (SALES_MANAGER ขึ้นไป)
+- `/rep/[userId]` — รายละเอียด KPI รายบุคคล (คลิกจาก Team/Executive Dashboard, SALES_MANAGER ขึ้นไป - หัวหน้าทีมดูได้เฉพาะทีมตัวเอง)
+- `/executive-dashboard` — **Executive Dashboard** พร้อมตัวกรองช่วงเวลา + พนักงานขาย และกราฟเปรียบเทียบทีม (MANAGEMENT ขึ้นไป)
 - `/audit-log` — ประวัติการเปลี่ยนแปลงข้อมูลสำคัญ (MANAGEMENT ขึ้นไป)
-- `/settings` — Master Data, ทีมขาย, Probability, ผู้ใช้งาน (ADMIN/MANAGEMENT)
+- `/settings` — Master Data, ทีมขาย, Probability, ผู้ใช้งาน, แจ้งเตือน LINE (ADMIN/MANAGEMENT)
+
+## การโอนงาน (Transfer)
+
+พนักงานขายโอนงานของตัวเองให้เพื่อนร่วมทีมได้เองจากส่วน "โอนงานให้เพื่อนร่วมทีม"
+ในหน้ารายละเอียดโอกาสขาย โดยไม่ต้องรอหัวหน้าทีม — ระบบบันทึกการโอนทุกครั้งไว้ใน
+Assignment History และ Audit Log เสมอ (ใครโอน โอนให้ใคร เมื่อไหร่) หัวหน้าทีมและ
+ผู้บริหารยังคงมอบหมาย/โอนงานของใครก็ได้ในสิทธิ์ตัวเอง
+
+## แจ้งเตือน LINE - สรุปยอดขายประจำวัน
+
+ตั้งค่าได้จาก **ตั้งค่า → แจ้งเตือน LINE** (เฉพาะ ADMIN) สรุปทุกวัน: ลูกค้าที่
+ติดตามกี่ราย, ปิดการขายกี่ราย, ลูกค้า/Lead เข้าใหม่กี่ราย แยกตามพนักงานขายแต่ละคน
+
+> **LINE Notify ปิดให้บริการแล้ว** ระบบนี้ใช้ **LINE Messaging API** แทน ซึ่งต้อง
+> สร้าง LINE Official Account เอง (ฟรี) ตามขั้นตอนนี้:
+>
+> 1. สมัคร [LINE Official Account Manager](https://manager.line.biz/) ด้วยบัญชี LINE บริษัท
+> 2. ไปที่ **Settings → Messaging API** เปิดใช้งาน Messaging API สำหรับ OA นั้น
+> 3. คัดลอก **Channel Access Token** (long-lived) จากหน้า Messaging API มาใส่ในระบบ
+>    ที่ ตั้งค่า → แจ้งเตือน LINE
+> 4. (ถ้าต้องการส่งเข้ากลุ่ม/แชทเดี่ยวที่กำหนด) หา **Target User/Group ID**:
+>    เพิ่ม OA เป็นเพื่อนหรือเชิญเข้ากลุ่ม แล้วดู userId/groupId จาก webhook log
+>    หรือเครื่องมือของ LINE Developers Console — ถ้าเว้นว่างไว้ ระบบจะ Broadcast
+>    ข้อความให้ทุกคนที่แอด OA เป็นเพื่อนแทน
+> 5. กดปุ่ม **"ส่งข้อความทดสอบ"** เพื่อยืนยันว่าตั้งค่าถูกต้อง
+
+### ตั้งเวลาส่งอัตโนมัติทุกวัน
+
+ระบบเองไม่มี cron ในตัว (เป็นเว็บแอปทั่วไป ไม่ใช่ serverless ที่มี cron built-in)
+ต้องตั้งค่าตัวจับเวลาจากภายนอกให้เรียก endpoint นี้วันละครั้ง:
+
+```
+POST https://<โดเมนของคุณ>/api/cron/daily-summary?secret=<CRON_SECRET>
+```
+
+1. ตั้งค่า `CRON_SECRET` ใน `.env` (สุ่มค่าเหมือน `SESSION_SECRET`)
+2. เปิดสวิตช์ "เปิดใช้งานสรุปยอดขายประจำวันอัตโนมัติ" ในหน้าตั้งค่า
+3. ตั้ง cron ภายนอก เช่น crontab บนเซิร์ฟเวอร์ (ตัวอย่างส่งเวลา 18:00 ทุกวัน):
+
+   ```
+   0 18 * * * curl -s "https://<โดเมนของคุณ>/api/cron/daily-summary?secret=<CRON_SECRET>"
+   ```
+
+   หรือใช้ GitHub Actions scheduled workflow / Vercel Cron ยิง URL เดียวกันนี้แทนก็ได้
+   endpoint จะไม่ส่งอะไรถ้าสวิตช์ปิดอยู่ หรือยังไม่ได้ตั้งค่า Token
 
 ## หมายเหตุด้านข้อมูล
 

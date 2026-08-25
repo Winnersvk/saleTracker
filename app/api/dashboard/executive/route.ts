@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireExecutiveOrThrow, handleApiError } from "@/lib/api-helpers";
 import { opportunityListInclude, decorateOpportunity } from "@/lib/opportunity-decorate";
@@ -9,18 +9,39 @@ function startOfDay(d: Date) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
+function endOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
 function monthKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function inRange(date: Date | string | null, from: Date | null, to: Date | null) {
+  if (!date) return false;
+  const d = new Date(date);
+  if (from && d < from) return false;
+  if (to && d > to) return false;
+  return true;
 }
 
 const DORMANT_THRESHOLD_DAYS = 60;
 
-export async function GET() {
+// Section 41: filterable by Month/Quarter/Year/Custom Date Range, and now
+// also by a specific sales rep so an executive can inspect one person's
+// numbers without leaving this dashboard.
+export async function GET(req: NextRequest) {
   try {
     await requireExecutiveOrThrow();
     const today = startOfDay(new Date());
+    const { searchParams } = new URL(req.url);
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+    const userId = searchParams.get("userId");
+    const periodFrom = fromParam ? startOfDay(new Date(fromParam)) : null;
+    const periodTo = toParam ? endOfDay(new Date(toParam)) : null;
 
-    const [opportunities, customers, jobTypes, leadSources] = await Promise.all([
+    const [allOpportunities, allCustomers, jobTypes, leadSources, users] = await Promise.all([
       prisma.opportunity.findMany({
         include: opportunityListInclude,
         orderBy: { createdAt: "desc" },
@@ -28,20 +49,37 @@ export async function GET() {
       prisma.customer.findMany({ include: { _count: { select: { opportunities: true } } } }),
       prisma.jobType.findMany(),
       prisma.leadSource.findMany(),
+      prisma.user.findMany({ where: { active: true }, select: { id: true, name: true } }),
     ]);
-    const decorated = opportunities.map(decorateOpportunity);
+
+    const decoratedAll = allOpportunities.map(decorateOpportunity);
+    const decorated = userId ? decoratedAll.filter((o) => o.salesOwnerId === userId) : decoratedAll;
+    const customerIdsInScope = userId ? new Set(decorated.map((o) => o.customerId)) : null;
+    const customers = customerIdsInScope
+      ? allCustomers.filter((c) => customerIdsInScope.has(c.id))
+      : allCustomers;
+
     const jobTypeMap = new Map(jobTypes.map((j) => [j.id, j.name]));
     const leadSourceMap = new Map(leadSources.map((s) => [s.id, s.name]));
 
     const valueOf = (o: (typeof decorated)[number]) =>
       o.acceptedQuotation?.amount ?? o.latestQuotation?.amount ?? o.estimatedValue ?? 0;
 
+    // Pipeline is a live snapshot of currently-open deals - not date filtered,
+    // only rep-filtered, since "what's open right now" isn't a period metric.
     const openRows = decorated.filter((o) => !isClosedStage(o.stage));
-    const wonRows = decorated.filter((o) => o.stage === "WON");
-    const lostRows = decorated.filter((o) => o.stage === "LOST");
-
     const totalPipeline = openRows.reduce((s, o) => s + valueOf(o), 0);
     const weightedPipeline = openRows.reduce((s, o) => s + (o.weightedValue ?? 0), 0);
+
+    // Everything else below respects the from/to period filter when set.
+    const leadsInPeriod = decorated.filter((o) => inRange(o.createdAt, periodFrom, periodTo) || (!periodFrom && !periodTo));
+    const wonRows = decorated.filter(
+      (o) => o.stage === "WON" && (inRange(o.wonDate, periodFrom, periodTo) || (!periodFrom && !periodTo))
+    );
+    const lostRows = decorated.filter(
+      (o) => o.stage === "LOST" && (inRange(o.lostDate, periodFrom, periodTo) || (!periodFrom && !periodTo))
+    );
+
     const wonValue = wonRows.reduce((s, o) => s + valueOf(o), 0);
     const winRate =
       wonRows.length + lostRows.length > 0
@@ -54,11 +92,13 @@ export async function GET() {
     const avgSalesCycleDays =
       cycleDays.length > 0 ? Math.round(cycleDays.reduce((a, b) => a + b, 0) / cycleDays.length) : null;
 
-    const newCustomers = customers.filter((c) => c.customerType === "NEW").length;
-    const repeatCustomers = customers.filter((c) => c.customerType === "REPEAT").length;
-    const existingCustomers = customers.filter((c) => c.customerType === "EXISTING").length;
+    const newCustomersCount = customers.filter((c) => c.customerType === "NEW").length;
+    const repeatCustomersCount = customers.filter((c) => c.customerType === "REPEAT").length;
+    const existingCustomersCount = customers.filter((c) => c.customerType === "EXISTING").length;
 
-    // Monthly trend, last 12 months
+    // Monthly trend always shows the last 12 months for long-run context,
+    // independent of the period filter above (which drives the KPI cards
+    // and breakdown tables/charts).
     const months: string[] = [];
     const cursor = new Date(today.getFullYear(), today.getMonth(), 1);
     for (let i = 11; i >= 0; i--) {
@@ -97,7 +137,7 @@ export async function GET() {
     });
 
     const bySource = new Map<string, typeof decorated>();
-    for (const o of decorated) {
+    for (const o of leadsInPeriod) {
       const key = o.leadSourceId ?? "unassigned";
       const arr = bySource.get(key) ?? [];
       arr.push(o);
@@ -119,7 +159,7 @@ export async function GET() {
       .sort((a, b) => b.leads - a.leads);
 
     const byProduct = new Map<string, typeof decorated>();
-    for (const o of decorated) {
+    for (const o of leadsInPeriod) {
       const key = o.jobTypeId ?? "unassigned";
       const arr = byProduct.get(key) ?? [];
       arr.push(o);
@@ -142,6 +182,33 @@ export async function GET() {
         };
       })
       .sort((a, b) => b.opportunities - a.opportunities);
+
+    // Per-rep comparison, always company-wide (ignores the rep filter -
+    // this is the chart used to pick a rep to filter down to).
+    const byRep = new Map<string, typeof decoratedAll>();
+    for (const o of decoratedAll) {
+      const key = o.salesOwnerId ?? "unassigned";
+      const arr = byRep.get(key) ?? [];
+      arr.push(o);
+      byRep.set(key, arr);
+    }
+    const userMap = new Map(users.map((u) => [u.id, u.name]));
+    const repPerformance = Array.from(byRep.entries())
+      .filter(([id]) => id !== "unassigned")
+      .map(([id, rows]) => {
+        const won = rows.filter((o) => o.stage === "WON");
+        const lost = rows.filter((o) => o.stage === "LOST");
+        return {
+          userId: id,
+          name: userMap.get(id) ?? "ไม่ระบุ",
+          opportunities: rows.length,
+          won: won.length,
+          lost: lost.length,
+          winRate: won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 1000) / 10 : 0,
+          wonValue: won.reduce((s, o) => s + valueOf(o), 0),
+        };
+      })
+      .sort((a, b) => b.wonValue - a.wonValue);
 
     const wonValueByCustomer = new Map<string, number>();
     const lastActivityByCustomer = new Map<string, Date | null>();
@@ -188,20 +255,22 @@ export async function GET() {
       winRate,
       avgDealSize,
       avgSalesCycleDays,
-      newCustomers,
-      repeatCustomers,
+      newCustomers: newCustomersCount,
+      repeatCustomers: repeatCustomersCount,
       monthlyTrend,
       leadSourcePerformance,
       productPerformance,
+      repPerformance,
       customerPerformance: {
-        newCustomers,
-        existingCustomers,
-        repeatCustomers,
+        newCustomers: newCustomersCount,
+        existingCustomers: existingCustomersCount,
+        repeatCustomers: repeatCustomersCount,
         repeatPurchaseRate:
-          customers.length > 0 ? Math.round((repeatCustomers / customers.length) * 1000) / 10 : 0,
+          customers.length > 0 ? Math.round((repeatCustomersCount / customers.length) * 1000) / 10 : 0,
         topCustomers,
         dormantCustomers,
       },
+      reps: users,
     });
   } catch (err) {
     return handleApiError(err);

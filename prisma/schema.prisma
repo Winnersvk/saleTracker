@@ -395,3 +395,14 @@ model WinflowJob {
 
   opportunity Opportunity @relation(fields: [opportunityId], references: [id])
 }
+
+// Single-row config for the LINE Messaging API daily-summary notification
+// (Section 47 extension - requested in addition to the in-app feed). Admin
+// only; the access token is never echoed back to the browser after saving.
+model IntegrationConfig {
+  id                 String   @id @default("singleton")
+  lineChannelToken   String?
+  lineTargetId       String?
+  lineDailySummaryOn Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}

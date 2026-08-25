@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   requireSessionOrThrow,
-  requireManagerOrAboveOrThrow,
   handleApiError,
   ApiError,
 } from "@/lib/api-helpers";
@@ -10,12 +9,17 @@ import { opportunityScopeWhere } from "@/lib/scope";
 import { reassignSchema } from "@/lib/validators";
 import { reassignOpportunity } from "@/lib/opportunity-service";
 
+// Managers+ can transfer any opportunity within their scope (Section 30:
+// "Assign Lead / Transfer Lead"); a SALES rep may also hand off their own
+// opportunity to a colleague - opportunityScopeWhere already restricts a
+// SALES session to opportunities they own, so the lookup below naturally
+// enforces "only your own" for that role without any extra check.
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireManagerOrAboveOrThrow();
+    const session = await requireSessionOrThrow();
     const { id } = await params;
     const opportunity = await prisma.opportunity.findFirst({
       where: { id, ...opportunityScopeWhere(session) },

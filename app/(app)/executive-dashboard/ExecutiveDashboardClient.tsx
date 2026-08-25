@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,14 +17,26 @@ import {
 import type { ExecutiveDashboardStats } from "@/lib/types";
 import { formatDate } from "@/lib/date";
 import { Card, StatCard } from "@/components/ui";
+import PeriodFilter, { type Period } from "@/components/PeriodFilter";
+
+const BAR_COLOR = "#2563eb";
+const WON_COLOR = "#10b981";
 
 export default function ExecutiveDashboardClient() {
+  const router = useRouter();
   const [stats, setStats] = useState<ExecutiveDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<Period>({ from: null, to: null, label: "ทั้งหมด" });
+  const [repFilter, setRepFilter] = useState("");
 
-  useEffect(() => {
-    fetch("/api/dashboard/executive")
+  const load = useCallback(() => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (period.from) params.set("from", period.from);
+    if (period.to) params.set("to", period.to);
+    if (repFilter) params.set("userId", repFilter);
+    fetch(`/api/dashboard/executive?${params.toString()}`)
       .then(async (r) => {
         const data = await r.json();
         if (!r.ok) throw new Error(data.error ?? "โหลดข้อมูลไม่สำเร็จ");
@@ -30,24 +45,48 @@ export default function ExecutiveDashboardClient() {
       .then(setStats)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [period, repFilter]);
 
-  if (loading) return <p className="text-sm text-slate-500">กำลังโหลดข้อมูล...</p>;
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading && !stats) return <p className="text-sm text-slate-500">กำลังโหลดข้อมูล...</p>;
   if (error || !stats)
     return <p className="text-sm text-rose-600">{error ?? "ไม่สามารถโหลดข้อมูลได้"}</p>;
 
   const trendData = stats.monthlyTrend.map((m) => ({ ...m, month: m.month.slice(2) }));
+  const selectedRepName = repFilter ? stats.reps.find((r) => r.id === repFilter)?.name : null;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">Executive Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-0.5">ธุรกิจฝ่ายขายกำลังเดินไปทางไหน</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Executive Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            ธุรกิจฝ่ายขายกำลังเดินไปทางไหน
+            {selectedRepName && <span className="text-blue-600"> · เฉพาะ {selectedRepName}</span>}
+            {period.from && <span> · ช่วง {formatDate(period.from)} - {formatDate(period.to)}</span>}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={repFilter}
+            onChange={(e) => setRepFilter(e.target.value)}
+            className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white"
+          >
+            <option value="">พนักงานขายทุกคน</option>
+            {stats.reps.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+          <PeriodFilter onChange={setPeriod} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Total Pipeline" value={stats.totalPipeline.toLocaleString()} />
-        <StatCard label="Weighted Pipeline" value={stats.weightedPipeline.toLocaleString()} />
+        <StatCard label="Total Pipeline" value={stats.totalPipeline.toLocaleString()} hint="ปัจจุบัน (ไม่ขึ้นกับช่วงเวลา)" />
+        <StatCard label="Weighted Pipeline" value={stats.weightedPipeline.toLocaleString()} hint="ปัจจุบัน (ไม่ขึ้นกับช่วงเวลา)" />
         <StatCard label="Won Value" value={stats.wonValue.toLocaleString()} tone="success" />
         <StatCard label="Win Rate" value={`${stats.winRate}%`} tone="success" />
       </div>
@@ -88,10 +127,47 @@ export default function ExecutiveDashboardClient() {
         </ResponsiveContainer>
       </Card>
 
+      {!repFilter && (
+        <Card className="p-4">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">เปรียบเทียบพนักงานขาย (Won Value)</h2>
+          <p className="text-xs text-slate-400 mb-3">คลิกที่แท่งกราฟเพื่อดูรายละเอียดรายบุคคล</p>
+          <ResponsiveContainer width="100%" height={Math.max(200, stats.repPerformance.length * 40)}>
+            <BarChart data={stats.repPerformance} layout="vertical" margin={{ left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+              <Tooltip />
+              <Bar
+                dataKey="wonValue"
+                name="Won Value"
+                fill={WON_COLOR}
+                radius={[0, 4, 4, 0]}
+                cursor="pointer"
+                onClick={(data) => {
+                  const userId = (data as { payload?: { userId?: string } }).payload?.userId;
+                  if (userId) router.push(`/rep/${userId}`);
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4">
           <h2 className="text-sm font-semibold text-slate-900 mb-3">Lead Source Performance</h2>
-          <div className="overflow-x-auto">
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={stats.leadSourcePerformance} margin={{ left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={50} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="leads" name="Leads" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="won" name="Won" fill={WON_COLOR} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="overflow-x-auto mt-3">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
@@ -121,7 +197,18 @@ export default function ExecutiveDashboardClient() {
 
         <Card className="p-4">
           <h2 className="text-sm font-semibold text-slate-900 mb-3">Product Performance</h2>
-          <div className="overflow-x-auto">
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={stats.productPerformance.slice(0, 8)} margin={{ left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={50} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="opportunities" name="ทั้งหมด" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="won" name="Won" fill={WON_COLOR} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="overflow-x-auto mt-3">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-slate-500 border-b border-slate-200">

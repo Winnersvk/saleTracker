@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSessionOrThrow, handleApiError, ApiError } from "@/lib/api-helpers";
 import { opportunityScopeWhere } from "@/lib/scope";
 import { updateOpportunitySchema } from "@/lib/validators";
-import { applyStageTransition } from "@/lib/opportunity-service";
+import { applyStageTransition, reassignOpportunity } from "@/lib/opportunity-service";
 import { opportunityDetailInclude, decorateOpportunity } from "@/lib/opportunity-decorate";
 
 const include = opportunityDetailInclude;
@@ -66,6 +66,24 @@ export async function PATCH(
         });
       }
 
+      // Route owner changes through the same tracked flow as /reassign
+      // (Section 29: every transfer needs an AssignmentHistory + audit
+      // entry), rather than silently overwriting the field.
+      let ownerFields = {};
+      const ownerChanged =
+        data.salesOwnerId !== undefined && data.salesOwnerId !== existing.salesOwnerId;
+      if (ownerChanged && data.salesOwnerId) {
+        const toUser = await tx.user.findUnique({ where: { id: data.salesOwnerId } });
+        if (!toUser) throw new ApiError("ไม่พบผู้ใช้งานปลายทาง", 404);
+        await reassignOpportunity(tx, {
+          opportunityId: id,
+          fromUserId: existing.salesOwnerId,
+          toUserId: data.salesOwnerId,
+          changedById: session.userId,
+        });
+        ownerFields = { salesOwnerId: data.salesOwnerId, teamId: toUser.teamId ?? existing.teamId };
+      }
+
       return tx.opportunity.update({
         where: { id },
         data: {
@@ -95,6 +113,7 @@ export async function PATCH(
           ...(data.nextAction !== undefined && { nextAction: data.nextAction || null }),
           ...(data.notes !== undefined && { notes: data.notes || null }),
           ...stageFields,
+          ...ownerFields,
         },
         include,
       });

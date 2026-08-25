@@ -6,6 +6,7 @@ import NamedListManager from "@/components/NamedListManager";
 import UsersManager from "@/components/UsersManager";
 import TeamsManager from "@/components/TeamsManager";
 import ProbabilityManager from "@/components/ProbabilityManager";
+import LineIntegrationManager from "@/components/LineIntegrationManager";
 import { Card } from "@/components/ui";
 
 const TABS = [
@@ -14,6 +15,7 @@ const TABS = [
   { key: "probability", label: "Probability" },
   { key: "teams", label: "ทีมขาย" },
   { key: "users", label: "ผู้ใช้งาน" },
+  { key: "line", label: "แจ้งเตือน LINE" },
 ] as const;
 
 export default function SettingsClient() {
@@ -138,6 +140,14 @@ export default function SettingsClient() {
           {tab === "users" && (
             isAdmin ? (
               <UsersManager users={users} teams={teams} currentUserId={currentUserId} onChanged={loadAll} />
+            ) : (
+              <Card className="p-4 text-sm text-slate-500">เฉพาะผู้ดูแลระบบเท่านั้นที่แก้ไขได้</Card>
+            )
+          )}
+
+          {tab === "line" && (
+            isAdmin ? (
+              <LineIntegrationManager />
             ) : (
               <Card className="p-4 text-sm text-slate-500">เฉพาะผู้ดูแลระบบเท่านั้นที่แก้ไขได้</Card>
             )
