@@ -235,3 +235,40 @@ export type ExecutiveDashboardStats = {
     dormantCustomers: { id: string; name: string; lastActivityDate: string | null }[];
   };
 };
+
+export type RepDashboardStats = {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    active: boolean;
+    team: { id: string; name: string } | null;
+  };
+  totals: {
+    opportunities: number;
+    won: number;
+    lost: number;
+    wonValue: number;
+    pipelineValue: number;
+    overdue: number;
+  };
+  kpis: {
+    winRate: number;
+    leadConversion: number;
+    quoteConversion: number;
+    avgDealSize: number;
+    avgSalesCycleDays: number | null;
+    followUpCompletionRate: number | null;
+    followUpsCompleted30d: number;
+    followUpsOverdue: number;
+  };
+  newLeadsToday: number;
+  followUpToday: number;
+  hotDeals: number;
+  quotationWaiting: number;
+  wonThisMonth: number;
+  todaysActions: Opportunity[];
+  pipelineByStage: { stage: Stage; count: number; value: number }[];
+  recentActivities: (Activity & { opportunity: { id: string; name: string } })[];
+};

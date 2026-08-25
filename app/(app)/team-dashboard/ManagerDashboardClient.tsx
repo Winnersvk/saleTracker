@@ -79,6 +79,7 @@ export default function ManagerDashboardClient() {
 
       <Card className="p-4">
         <h2 className="text-sm font-semibold text-slate-900 mb-3">Sales Performance</h2>
+        <p className="text-xs text-slate-400 mb-2">คลิกที่ชื่อพนักงานเพื่อดูรายละเอียดรายบุคคล</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -96,22 +97,33 @@ export default function ManagerDashboardClient() {
               </tr>
             </thead>
             <tbody>
-              {stats.salesPerformance.map((r) => (
-                <tr key={r.userId} className="border-b border-slate-100 last:border-0">
-                  <td className="py-2 pr-4 font-medium text-slate-800">{r.name}</td>
-                  <td className="py-2 pr-4">{r.opportunities}</td>
-                  <td className="py-2 pr-4">{r.quotations}</td>
-                  <td className="py-2 pr-4">{r.won}</td>
-                  <td className="py-2 pr-4">{r.lost}</td>
-                  <td className="py-2 pr-4">{r.winRate}%</td>
-                  <td className="py-2 pr-4">{r.pipelineValue.toLocaleString()}</td>
-                  <td className="py-2 pr-4">{r.wonValue.toLocaleString()}</td>
-                  <td className="py-2 pr-4">{r.overdue}</td>
-                  <td className="py-2 pr-4">
-                    {r.avgSalesCycleDays != null ? `${r.avgSalesCycleDays} วัน` : "-"}
-                  </td>
-                </tr>
-              ))}
+              {stats.salesPerformance.map((r) => {
+                const clickable = r.userId !== "unassigned";
+                return (
+                  <tr
+                    key={r.userId}
+                    onClick={() => clickable && router.push(`/rep/${r.userId}`)}
+                    className={`border-b border-slate-100 last:border-0 ${
+                      clickable ? "hover:bg-slate-50 cursor-pointer" : ""
+                    }`}
+                  >
+                    <td className="py-2 pr-4 font-medium text-slate-800">
+                      {clickable ? <span className="text-blue-600 hover:underline">{r.name}</span> : r.name}
+                    </td>
+                    <td className="py-2 pr-4">{r.opportunities}</td>
+                    <td className="py-2 pr-4">{r.quotations}</td>
+                    <td className="py-2 pr-4">{r.won}</td>
+                    <td className="py-2 pr-4">{r.lost}</td>
+                    <td className="py-2 pr-4">{r.winRate}%</td>
+                    <td className="py-2 pr-4">{r.pipelineValue.toLocaleString()}</td>
+                    <td className="py-2 pr-4">{r.wonValue.toLocaleString()}</td>
+                    <td className="py-2 pr-4">{r.overdue}</td>
+                    <td className="py-2 pr-4">
+                      {r.avgSalesCycleDays != null ? `${r.avgSalesCycleDays} วัน` : "-"}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
