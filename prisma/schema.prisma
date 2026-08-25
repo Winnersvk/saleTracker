@@ -1,4 +1,18 @@
-// Winner Sale Tracker - Prisma schema
+// Winner Sales Tracker - Prisma schema
+// Implements the V1 "Must Have" scope of the Master System Specification:
+// Customer -> Opportunity -> 11-stage Pipeline, Activity timeline, Quotation
+// tracking (manual entry - no live PEAK API in this build), Lost Reason,
+// role-based visibility, stage/assignment history and audit log.
+//
+// Deliberate simplification vs. the spec: "Lead" is not a separate table.
+// The spec's own Pipeline Stage 1 ("New Lead - ยังไม่ได้ติดต่อจริง") already
+// defines a Lead as an Opportunity that hasn't been contacted yet, and every
+// Lead field the spec lists (Lead Source, Contact Channel, Interested
+// Product, Temperature) is also an Opportunity field. Modeling them as one
+// entity avoids a lead-to-opportunity "conversion" step that the business
+// data has no real analog for, per the spec's own "Simple for Sales"
+// principle (Section 59).
+//
 // SQLite for zero-config, file-based storage suited to a small internal tool.
 
 generator client {
@@ -10,28 +24,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
 enum Role {
-  ADMIN
-  SALES
+  SALES          // ดู/แก้ไขเฉพาะของตัวเอง
+  SALES_MANAGER  // ดูทีม, assign/transfer, team dashboard
+  MANAGEMENT     // Executive dashboard, read-only ทุกทีม
+  ADMIN          // System admin: user/master/permission/integration
 }
 
-enum LeadStatus {
-  QUOTING     // เสนอราคา
-  CONTACTING  // กำลังติดต่อ
-  ORDERED     // สั่งงานแล้ว
-  NOT_ORDERED // บ่สั่งงาน
+enum CustomerType {
+  NEW
+  EXISTING
+  REPEAT
 }
 
-enum PriceNotifyMethod {
-  CHAT       // แจ้งราคาทางแชท
-  QUOTATION  // ใบเสนอราคา
-  ESTIMATE   // ปะเมินราคา
+enum CustomerSegment {
+  RETAIL
+  SME
+  CORPORATE
+  GOVERNMENT
+  AGENCY
+  CONTRACTOR
+  RESELLER
+  PARTNER
+  OTHER
 }
 
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
+// Pipeline V1 - 11 stages (Section 11)
+enum Stage {
+  NEW_LEAD          // 1 ลูกค้าเพิ่งเข้ามา ยังไม่ได้ติดต่อจริง
+  CONTACTED         // 2 ติดต่อกับลูกค้าแล้ว
+  REQUIREMENT       // 3 กำลังเก็บ Requirement
+  ESTIMATING        // 4 กำลังประเมินราคา
+  QUOTATION_SENT    // 5 มีใบเสนอราคาแล้ว
+  FOLLOW_UP         // 6 กำลังติดตามผล
+  NEGOTIATION       // 7 กำลังต่อรอง
+  WAITING_APPROVAL  // 8 รออนุมัติ
+  WON               // 9 ลูกค้ายืนยันสั่งงาน
+  LOST              // 10 ไม่ได้งาน
+  ON_HOLD           // 11 หยุดโครงการชั่วคราว
+}
+
+enum Temperature {
+  HOT
+  WARM
+  COLD
+}
+
+enum ActivityType {
+  CALL
+  WHATSAPP
+  LINE
+  FACEBOOK
+  EMAIL
+  MEETING
+  SITE_SURVEY
+  QUOTATION_SENT
+  FOLLOW_UP
+  NEGOTIATION
+  CUSTOMER_REPLY
+  INTERNAL_NOTE
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+// Short status only - full production detail lives in WINFLOW (Section 27).
+// No live WINFLOW API in this build; Sales/Admin update this manually.
+enum WinflowStage {
+  JOB_CREATED
+  DESIGN
+  PRODUCTION
+  QC
+  READY_FOR_DELIVERY
+  DELIVERED
+  INSTALLATION
+  COMPLETED
+}
+
+// ---------------------------------------------------------------------------
+// Org / access
+// ---------------------------------------------------------------------------
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  users         User[]
+  opportunities Opportunity[]
 }
 
 model User {
@@ -40,12 +129,23 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role     @default(SALES)
+  teamId       String?
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
-  leads     Lead[]     @relation("AssignedLeads")
-  followUps FollowUp[]
+  team               Team?                @relation(fields: [teamId], references: [id])
+  opportunities      Opportunity[]        @relation("SalesOwner")
+  activities         Activity[]
+  stageChangesMade   StageHistory[]
+  assignmentsMade    AssignmentHistory[]  @relation("AssignmentChangedBy")
+  assignmentsFrom    AssignmentHistory[]  @relation("AssignmentFrom")
+  assignmentsTo      AssignmentHistory[]  @relation("AssignmentTo")
+  auditLogEntries    AuditLog[]
 }
+
+// ---------------------------------------------------------------------------
+// Masters (admin-managed)
+// ---------------------------------------------------------------------------
 
 model JobType {
   id        String   @id @default(cuid())
@@ -54,9 +154,10 @@ model JobType {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
-  leads Lead[]
+  opportunities Opportunity[]
 }
 
+// "ช่องทางที่กำลังใช้คุยกับลูกค้า" (Section 8) - distinct from LeadSource.
 model Channel {
   id        String   @id @default(cuid())
   name      String   @unique
@@ -64,48 +165,233 @@ model Channel {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
-  leads Lead[]
+  opportunities Opportunity[]
 }
 
-model Lead {
-  id                String             @id @default(cuid())
-  name              String
-  phone             String?
-  jobTypeId         String?
-  channelId         String?
-  contactStartDate  DateTime?
-  priceNotifyMethod PriceNotifyMethod?
-  status            LeadStatus         @default(CONTACTING)
-  priority          Priority           @default(MEDIUM)
-  notes             String?
-  isDone            Boolean            @default(false)
-  nextFollowUpDate  DateTime?
-  assignedToId      String?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+// "ลูกค้ามาจากไหน" (Section 7) - distinct from Channel.
+model LeadSource {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
 
-  jobType    JobType?   @relation(fields: [jobTypeId], references: [id])
-  channel    Channel?   @relation(fields: [channelId], references: [id])
-  assignedTo User?      @relation("AssignedLeads", fields: [assignedToId], references: [id])
-  followUps  FollowUp[]
-
-  @@index([status])
-  @@index([assignedToId])
-  @@index([jobTypeId])
-  @@index([channelId])
+  opportunities Opportunity[]
 }
 
-model FollowUp {
-  id           String   @id @default(cuid())
-  leadId       String
-  note         String
-  contactedAt  DateTime @default(now())
-  resultStatus LeadStatus?
-  createdById  String?
-  createdAt    DateTime @default(now())
+model LostReason {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
 
-  lead      Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  createdBy User? @relation(fields: [createdById], references: [id])
+  opportunities Opportunity[]
+}
 
-  @@index([leadId])
+// Default win-probability per stage (Section 19); editable by Management/Admin.
+model ProbabilityConfig {
+  stage   Stage @id
+  percent Int
+}
+
+// ---------------------------------------------------------------------------
+// Customer (Module 1, Section 5)
+// ---------------------------------------------------------------------------
+
+model Customer {
+  id             String           @id @default(cuid())
+  customerCode   String           @unique
+  peakCustomerId String?          // manual reference until PEAK API is connected
+  name           String
+  companyName    String?
+  customerType   CustomerType     @default(NEW)
+  segment        CustomerSegment?
+
+  contactPerson String?
+  position      String?
+  phone         String?
+  whatsapp      String?
+  line          String?
+  facebook      String?
+  email         String?
+
+  address     String?
+  district    String?
+  province    String?
+  country     String?
+  mapLocation String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  opportunities Opportunity[]
+
+  @@index([name])
+}
+
+// ---------------------------------------------------------------------------
+// Opportunity (Module 3, Section 9) - the core pipeline entity
+// ---------------------------------------------------------------------------
+
+model Opportunity {
+  id         String @id @default(cuid())
+  name       String
+  customerId String
+
+  salesOwnerId String?
+  teamId       String?
+
+  jobTypeId            String?
+  description          String?
+  quantity             String?
+  estimatedSize        String?
+  requiredDate         DateTime?
+  installationRequired Boolean   @default(false)
+  location             String?
+  budget               Float?
+
+  leadSourceId String?
+  channelId    String?
+
+  stage       Stage       @default(NEW_LEAD)
+  temperature Temperature @default(WARM)
+  probability Int         @default(10)
+
+  estimatedValue Float?
+
+  lastActivityDate DateTime?
+  nextFollowUpDate DateTime?
+  nextFollowUpTime String?
+  nextAction       String?
+
+  wonDate      DateTime?
+  lostDate     DateTime?
+  lostReasonId String?
+  lostRemark   String?
+  onHoldReason String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  salesOwner User?       @relation("SalesOwner", fields: [salesOwnerId], references: [id])
+  team       Team?       @relation(fields: [teamId], references: [id])
+  jobType    JobType?    @relation(fields: [jobTypeId], references: [id])
+  leadSource LeadSource? @relation(fields: [leadSourceId], references: [id])
+  channel    Channel?    @relation(fields: [channelId], references: [id])
+  lostReason LostReason? @relation(fields: [lostReasonId], references: [id])
+
+  quotations        Quotation[]
+  activities        Activity[]
+  stageHistory      StageHistory[]
+  assignmentHistory AssignmentHistory[]
+  winflowJob        WinflowJob?
+
+  @@index([stage])
+  @@index([salesOwnerId])
+  @@index([customerId])
+  @@index([teamId])
+}
+
+// 1 Opportunity -> many Quotation (Section 22). Entered manually - Sales
+// Tracker does not create quotations; PEAK is the source of truth for
+// amounts, this just mirrors what was sent so pipeline value can be computed.
+model Quotation {
+  id            String          @id @default(cuid())
+  opportunityId String
+  quotationNo   String?
+  quotationDate DateTime?
+  amount        Float
+  status        QuotationStatus @default(SENT)
+  isAccepted    Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId])
+}
+
+// Activity timeline (Module 5, Section 16)
+model Activity {
+  id            String       @id @default(cuid())
+  opportunityId String
+  type          ActivityType
+  occurredAt    DateTime     @default(now())
+  createdById   String?
+  note          String?
+  followUpRequired Boolean   @default(false)
+  nextFollowUpDate DateTime?
+  createdAt     DateTime     @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  createdBy   User?       @relation(fields: [createdById], references: [id])
+
+  @@index([opportunityId])
+}
+
+// Stage change audit trail (Section 12)
+model StageHistory {
+  id            String   @id @default(cuid())
+  opportunityId String
+  previousStage Stage?
+  newStage      Stage
+  changedById   String?
+  changedAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  changedBy   User?       @relation(fields: [changedById], references: [id])
+
+  @@index([opportunityId])
+}
+
+// Sales owner transfer log (Section 29)
+model AssignmentHistory {
+  id            String   @id @default(cuid())
+  opportunityId String
+  fromUserId    String?
+  toUserId      String?
+  reason        String?
+  changedById   String?
+  changedAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  fromUser    User?       @relation("AssignmentFrom", fields: [fromUserId], references: [id])
+  toUser      User?       @relation("AssignmentTo", fields: [toUserId], references: [id])
+  changedBy   User?       @relation("AssignmentChangedBy", fields: [changedById], references: [id])
+
+  @@index([opportunityId])
+}
+
+// Generic audit log for key field changes (Section 48)
+model AuditLog {
+  id            String   @id @default(cuid())
+  entityType    String   // "Opportunity" | "Customer" | ...
+  entityId      String
+  field         String   // "stage" | "salesOwner" | "won" | "lost" | "customerLink" | ...
+  previousValue String?
+  newValue      String?
+  changedById   String?
+  changedAt     DateTime @default(now())
+
+  changedBy User? @relation(fields: [changedById], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+// Short WINFLOW status mirror shown to Sales (Section 27). Manually updated -
+// no live WINFLOW API in this build (Section 26 payload fields are captured
+// as free text on creation so nothing is lost once a real integration lands).
+model WinflowJob {
+  id            String       @id @default(cuid())
+  opportunityId String       @unique
+  jobNo         String?
+  stage         WinflowStage @default(JOB_CREATED)
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id])
 }
