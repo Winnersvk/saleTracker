@@ -39,7 +39,7 @@ export async function DELETE(
     const { id } = await params;
     const existing = await prisma.jobType.findUnique({ where: { id } });
     if (!existing) throw new ApiError("ไม่พบข้อมูล", 404);
-    const inUse = await prisma.lead.count({ where: { jobTypeId: id } });
+    const inUse = await prisma.opportunity.count({ where: { jobTypeId: id } });
     if (inUse > 0) {
       const jobType = await prisma.jobType.update({
         where: { id },

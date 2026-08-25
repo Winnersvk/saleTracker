@@ -1,4 +1,5 @@
 import type { Stage } from "@prisma/client";
+export type { Stage };
 
 // Pipeline V1 - 11 stages, in process order (Section 11)
 export const STAGE_ORDER: Stage[] = [

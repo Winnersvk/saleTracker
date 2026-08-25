@@ -39,7 +39,7 @@ export async function DELETE(
     const { id } = await params;
     const existing = await prisma.channel.findUnique({ where: { id } });
     if (!existing) throw new ApiError("ไม่พบข้อมูล", 404);
-    const inUse = await prisma.lead.count({ where: { channelId: id } });
+    const inUse = await prisma.opportunity.count({ where: { channelId: id } });
     if (inUse > 0) {
       const channel = await prisma.channel.update({
         where: { id },

@@ -37,6 +37,7 @@ export async function PATCH(
         name: true,
         email: true,
         role: true,
+        teamId: true,
         active: true,
         createdAt: true,
       },
@@ -59,7 +60,7 @@ export async function DELETE(
     }
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) throw new ApiError("ไม่พบข้อมูล", 404);
-    // Deactivate instead of delete to preserve lead/follow-up history integrity.
+    // Deactivate instead of delete to preserve opportunity/activity history integrity.
     const user = await prisma.user.update({
       where: { id },
       data: { active: false },

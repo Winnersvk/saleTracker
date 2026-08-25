@@ -145,7 +145,7 @@ export default function UsersManager({
                   </select>
                 </td>
                 <td className="py-2 pr-4 text-slate-600">
-                  {u._count?.leads ?? 0}
+                  {u._count?.opportunities ?? 0}
                 </td>
                 <td className="py-2 pr-4">
                   {u.active ? (

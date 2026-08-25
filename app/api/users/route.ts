@@ -17,9 +17,11 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
+        teamId: true,
+        team: { select: { id: true, name: true } },
         active: true,
         createdAt: true,
-        _count: { select: { leads: true } },
+        _count: { select: { opportunities: true } },
       },
       orderBy: { name: "asc" },
     });
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { name, email, password, role } = parsed.data;
+    const { name, email, password, role, teamId } = parsed.data;
     const existing = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
@@ -57,12 +59,14 @@ export async function POST(req: NextRequest) {
         email: email.toLowerCase(),
         passwordHash,
         role: role || "SALES",
+        teamId: teamId || null,
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        teamId: true,
         active: true,
         createdAt: true,
       },
