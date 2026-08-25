@@ -39,7 +39,8 @@ export function decorateOpportunity<
     quotations?: { amount: number; isAccepted: boolean; createdAt: Date | string }[];
   }
 >(o: T) {
-  const quotations = o.quotations ?? [];
+  type Quotation = NonNullable<T["quotations"]>[number];
+  const quotations = (o.quotations ?? []) as Quotation[];
   const acceptedQuotation = quotations.find((q) => q.isAccepted) ?? null;
   const latestQuotation = quotations[0] ?? null;
   const value = acceptedQuotation?.amount ?? latestQuotation?.amount ?? o.estimatedValue ?? 0;
