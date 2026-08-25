@@ -169,20 +169,20 @@ export default function OpportunitiesClient() {
   const canReassign = currentRole === "SALES_MANAGER" || currentRole === "MANAGEMENT" || currentRole === "ADMIN";
 
   const selectClass =
-    "rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white";
+    "rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white";
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">โอกาสขาย (Opportunities)</h1>
+          <h1 className="text-xl font-semibold text-ink">โอกาสขาย (Opportunities)</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             พบ {filtered.length.toLocaleString()} รายการ จากทั้งหมด {opportunities.length.toLocaleString()} รายการ
           </p>
         </div>
         <button
           onClick={openCreate}
-          className="rounded-lg bg-blue-600 text-white px-3 py-2 text-sm font-medium hover:bg-blue-700"
+          className="rounded-full bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary-hover"
         >
           + เพิ่มโอกาสขายใหม่
         </button>
@@ -194,7 +194,7 @@ export default function OpportunitiesClient() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="ค้นหาชื่องาน, ลูกค้า, หมายเหตุ..."
-            className="flex-1 min-w-[200px] rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[200px] rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <select value={openClosedFilter} onChange={(e) => setOpenClosedFilter(e.target.value as "open" | "closed" | "all")} className={selectClass}>
             <option value="open">ยังเปิดอยู่</option>

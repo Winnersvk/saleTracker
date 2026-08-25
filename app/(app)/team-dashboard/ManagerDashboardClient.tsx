@@ -47,7 +47,7 @@ export default function ManagerDashboardClient() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Team Dashboard</h1>
+        <h1 className="text-xl font-semibold text-ink">Team Dashboard</h1>
         <p className="text-sm text-slate-500 mt-0.5">ทีมขายกำลังทำงานดีหรือไม่</p>
       </div>
 
@@ -65,7 +65,7 @@ export default function ManagerDashboardClient() {
       </div>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Sales Funnel</h2>
+        <h2 className="text-sm font-semibold text-ink mb-3">Sales Funnel</h2>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={funnelData} margin={{ left: -20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -78,7 +78,7 @@ export default function ManagerDashboardClient() {
       </Card>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-1">เปรียบเทียบพนักงานขาย (Won Value)</h2>
+        <h2 className="text-sm font-semibold text-ink mb-1">เปรียบเทียบพนักงานขาย (Won Value)</h2>
         <p className="text-xs text-slate-400 mb-3">คลิกที่แท่งกราฟเพื่อดูรายละเอียดรายบุคคล</p>
         <ResponsiveContainer
           width="100%"
@@ -112,7 +112,7 @@ export default function ManagerDashboardClient() {
       </Card>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Sales Performance</h2>
+        <h2 className="text-sm font-semibold text-ink mb-3">Sales Performance</h2>
         <p className="text-xs text-slate-400 mb-2">คลิกที่ชื่อพนักงานเพื่อดูรายละเอียดรายบุคคล</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -142,7 +142,7 @@ export default function ManagerDashboardClient() {
                     }`}
                   >
                     <td className="py-2 pr-4 font-medium text-slate-800">
-                      {clickable ? <span className="text-blue-600 hover:underline">{r.name}</span> : r.name}
+                      {clickable ? <span className="text-primary hover:underline">{r.name}</span> : r.name}
                     </td>
                     <td className="py-2 pr-4">{r.opportunities}</td>
                     <td className="py-2 pr-4">{r.quotations}</td>
@@ -165,7 +165,7 @@ export default function ManagerDashboardClient() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">
+          <h2 className="text-sm font-semibold text-ink mb-3">
             No Activity Report (≥7 วัน)
           </h2>
           <ul className="space-y-2 max-h-80 overflow-y-auto">
@@ -191,7 +191,7 @@ export default function ManagerDashboardClient() {
         </Card>
 
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Quotation Aging</h2>
+          <h2 className="text-sm font-semibold text-ink mb-3">Quotation Aging</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
@@ -211,7 +211,7 @@ export default function ManagerDashboardClient() {
             </tbody>
           </table>
 
-          <h2 className="text-sm font-semibold text-slate-900 mt-5 mb-3">Lost Reasons</h2>
+          <h2 className="text-sm font-semibold text-ink mt-5 mb-3">Lost Reasons</h2>
           <ul className="space-y-1.5">
             {stats.lostReasons.map((l) => (
               <li key={l.reason} className="flex items-center justify-between text-sm">

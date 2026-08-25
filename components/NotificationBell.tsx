@@ -55,7 +55,7 @@ export default function NotificationBell() {
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg z-40">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-900">การแจ้งเตือน</span>
+              <span className="text-sm font-semibold text-ink">การแจ้งเตือน</span>
               {!loading && <span className="text-xs text-slate-400">{items.length} รายการ</span>}
             </div>
             <ul>

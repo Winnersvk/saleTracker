@@ -10,6 +10,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Brand palette */
+  --color-primary: #ff6117;
+  --color-primary-hover: #e2530f;
+  --color-primary-soft: #fff0e6;
+  --color-primary-soft-hover: #ffe1cc;
+  --color-ink: #252525;
+  --color-surface: #eaeaea;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -98,7 +98,7 @@ export default function LineIntegrationManager() {
   return (
     <div className="space-y-4">
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-1">แจ้งเตือน LINE - สรุปยอดขายประจำวัน</h2>
+        <h2 className="text-sm font-semibold text-ink mb-1">แจ้งเตือน LINE - สรุปยอดขายประจำวัน</h2>
         <p className="text-xs text-slate-400 mb-4">
           ใช้ LINE Messaging API (LINE Notify ปิดให้บริการแล้ว) ต้องสร้าง LINE
           Official Account และขอ Channel Access Token เอง — ดูขั้นตอนใน README
@@ -157,7 +157,7 @@ export default function LineIntegrationManager() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+              className="rounded-full bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-primary-hover disabled:opacity-60"
             >
               {saving ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}
             </button>
@@ -165,7 +165,7 @@ export default function LineIntegrationManager() {
               type="button"
               onClick={handleTest}
               disabled={testing || !config?.configured}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-surface disabled:opacity-50"
             >
               {testing ? "กำลังส่ง..." : "ส่งข้อความทดสอบ"}
             </button>
@@ -173,7 +173,7 @@ export default function LineIntegrationManager() {
               type="button"
               onClick={handleSendNow}
               disabled={sending || !config?.configured}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-surface disabled:opacity-50"
             >
               {sending ? "กำลังส่ง..." : "ส่งสรุปวันนี้ตอนนี้"}
             </button>

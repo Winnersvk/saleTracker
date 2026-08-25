@@ -44,7 +44,7 @@ export default function AuditLogClient() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Audit Log</h1>
+        <h1 className="text-xl font-semibold text-ink">Audit Log</h1>
         <p className="text-sm text-slate-500 mt-0.5">
           ประวัติการเปลี่ยนแปลงข้อมูลสำคัญ (Stage, Sales Owner, Won/Lost)
         </p>
@@ -79,7 +79,7 @@ export default function AuditLogClient() {
                     <td className="py-2 px-3 whitespace-nowrap text-slate-500">{formatDateTime(e.changedAt)}</td>
                     <td className="py-2 px-3">
                       {e.entityType === "Opportunity" ? (
-                        <Link href={`/opportunities?openId=${e.entityId}`} className="text-blue-600 hover:underline">
+                        <Link href={`/opportunities?openId=${e.entityId}`} className="text-primary hover:underline">
                           {e.entityLabel}
                         </Link>
                       ) : (

@@ -73,18 +73,18 @@ export default function NamedListManager({
 
   return (
     <Card className="p-4">
-      <h2 className="text-sm font-semibold text-slate-900 mb-3">{title}</h2>
+      <h2 className="text-sm font-semibold text-ink mb-3">{title}</h2>
       <form onSubmit={addItem} className="flex gap-2 mb-4">
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="เพิ่มรายการใหม่..."
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 text-white px-3 py-1.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+          className="rounded-full bg-primary text-white px-3 py-1.5 text-sm font-medium hover:bg-primary-hover disabled:opacity-60"
         >
           เพิ่ม
         </button>

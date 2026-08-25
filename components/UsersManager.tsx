@@ -82,7 +82,7 @@ export default function UsersManager({
 
   return (
     <Card className="p-4">
-      <h2 className="text-sm font-semibold text-slate-900 mb-3">ผู้ใช้งานระบบ</h2>
+      <h2 className="text-sm font-semibold text-ink mb-3">ผู้ใช้งานระบบ</h2>
       <form
         onSubmit={addUser}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mb-4"
@@ -92,7 +92,7 @@ export default function UsersManager({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="ชื่อ"
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <input
           required
@@ -100,7 +100,7 @@ export default function UsersManager({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="อีเมล"
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <input
           required
@@ -108,12 +108,12 @@ export default function UsersManager({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว)"
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as Role)}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
         >
           {Object.entries(ROLE_LABELS).map(([v, l]) => (
             <option key={v} value={v}>{l}</option>
@@ -122,7 +122,7 @@ export default function UsersManager({
         <select
           value={teamId}
           onChange={(e) => setTeamId(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
         >
           <option value="">ไม่มีทีม</option>
           {teams.map((t) => (
@@ -132,7 +132,7 @@ export default function UsersManager({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 text-white px-3 py-1.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+          className="rounded-full bg-primary text-white px-3 py-1.5 text-sm font-medium hover:bg-primary-hover disabled:opacity-60"
         >
           เพิ่มผู้ใช้
         </button>

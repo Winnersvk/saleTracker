@@ -177,7 +177,7 @@ export default function CustomerDrawer({
         type={type}
         value={form[key]}
         onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
   );
@@ -187,7 +187,7 @@ export default function CustomerDrawer({
       <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} aria-hidden />
       <div className="relative w-full max-w-lg h-full bg-white shadow-xl flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-ink">
             {customerId ? `ลูกค้า ${customer?.customerCode ?? ""}` : "เพิ่มลูกค้าใหม่"}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-xl leading-none">
@@ -271,7 +271,7 @@ export default function CustomerDrawer({
 
           {customerId && (
             <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              <h3 className="text-sm font-semibold text-ink mb-3">
                 โอกาสขาย ({opportunities.length})
               </h3>
               <ul className="space-y-2">
@@ -312,7 +312,7 @@ export default function CustomerDrawer({
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-surface"
             >
               ยกเลิก
             </button>
@@ -320,7 +320,7 @@ export default function CustomerDrawer({
               form="customer-form"
               type="submit"
               disabled={saving || loading}
-              className="rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+              className="rounded-full bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-primary-hover disabled:opacity-60"
             >
               {saving ? "กำลังบันทึก..." : "บันทึก"}
             </button>

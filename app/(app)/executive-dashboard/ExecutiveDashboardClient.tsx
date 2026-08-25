@@ -19,7 +19,7 @@ import { formatDate } from "@/lib/date";
 import { Card, StatCard } from "@/components/ui";
 import PeriodFilter, { type Period } from "@/components/PeriodFilter";
 
-const BAR_COLOR = "#2563eb";
+const BAR_COLOR = "#FF6117";
 const WON_COLOR = "#10b981";
 
 export default function ExecutiveDashboardClient() {
@@ -62,10 +62,10 @@ export default function ExecutiveDashboardClient() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Executive Dashboard</h1>
+          <h1 className="text-xl font-semibold text-ink">Executive Dashboard</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             ธุรกิจฝ่ายขายกำลังเดินไปทางไหน
-            {selectedRepName && <span className="text-blue-600"> · เฉพาะ {selectedRepName}</span>}
+            {selectedRepName && <span className="text-primary"> · เฉพาะ {selectedRepName}</span>}
             {period.from && <span> · ช่วง {formatDate(period.from)} - {formatDate(period.to)}</span>}
           </p>
         </div>
@@ -101,7 +101,7 @@ export default function ExecutiveDashboardClient() {
       </div>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">แนวโน้มรายเดือน (12 เดือนล่าสุด)</h2>
+        <h2 className="text-sm font-semibold text-ink mb-3">แนวโน้มรายเดือน (12 เดือนล่าสุด)</h2>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={trendData} margin={{ left: -10 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -121,7 +121,7 @@ export default function ExecutiveDashboardClient() {
             <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Line type="monotone" dataKey="leads" name="Lead ใหม่" stroke="#2563eb" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="leads" name="Lead ใหม่" stroke="#FF6117" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="conversionRate" name="Conversion %" stroke="#f59e0b" strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
@@ -129,7 +129,7 @@ export default function ExecutiveDashboardClient() {
 
       {!repFilter && (
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-1">เปรียบเทียบพนักงานขาย (Won Value)</h2>
+          <h2 className="text-sm font-semibold text-ink mb-1">เปรียบเทียบพนักงานขาย (Won Value)</h2>
           <p className="text-xs text-slate-400 mb-3">คลิกที่แท่งกราฟเพื่อดูรายละเอียดรายบุคคล</p>
           <ResponsiveContainer width="100%" height={Math.max(200, stats.repPerformance.length * 40)}>
             <BarChart data={stats.repPerformance} layout="vertical" margin={{ left: 10 }}>
@@ -155,7 +155,7 @@ export default function ExecutiveDashboardClient() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Lead Source Performance</h2>
+          <h2 className="text-sm font-semibold text-ink mb-3">Lead Source Performance</h2>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={stats.leadSourcePerformance} margin={{ left: -20 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -196,7 +196,7 @@ export default function ExecutiveDashboardClient() {
         </Card>
 
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Product Performance</h2>
+          <h2 className="text-sm font-semibold text-ink mb-3">Product Performance</h2>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={stats.productPerformance.slice(0, 8)} margin={{ left: -20 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -239,7 +239,7 @@ export default function ExecutiveDashboardClient() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Top Customers (Won Value)</h2>
+          <h2 className="text-sm font-semibold text-ink mb-3">Top Customers (Won Value)</h2>
           <ul className="space-y-1.5">
             {stats.customerPerformance.topCustomers.map((c) => (
               <li key={c.id} className="flex items-center justify-between text-sm">
@@ -259,7 +259,7 @@ export default function ExecutiveDashboardClient() {
         </Card>
 
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Dormant Customers (≥60 วัน)</h2>
+          <h2 className="text-sm font-semibold text-ink mb-3">Dormant Customers (≥60 วัน)</h2>
           <ul className="space-y-1.5 max-h-60 overflow-y-auto">
             {stats.customerPerformance.dormantCustomers.map((c) => (
               <li key={c.id} className="flex items-center justify-between text-sm">

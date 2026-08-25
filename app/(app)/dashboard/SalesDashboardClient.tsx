@@ -32,7 +32,7 @@ export default function SalesDashboardClient() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">My Dashboard</h1>
+        <h1 className="text-xl font-semibold text-ink">My Dashboard</h1>
         <p className="text-sm text-slate-500 mt-0.5">วันนี้ฉันต้องทำอะไร</p>
       </div>
 
@@ -46,7 +46,7 @@ export default function SalesDashboardClient() {
       </div>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Today&apos;s Actions</h2>
+        <h2 className="text-sm font-semibold text-ink mb-3">Today&apos;s Actions</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -105,12 +105,12 @@ export default function SalesDashboardClient() {
       </Card>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">My Pipeline</h2>
+        <h2 className="text-sm font-semibold text-ink mb-3">My Pipeline</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           {stats.pipelineByStage.map((p) => (
             <div key={p.stage} className="rounded-xl border border-slate-200 p-3">
               <Badge className={STAGE_COLORS[p.stage]}>{STAGE_LABELS[p.stage]}</Badge>
-              <p className="text-lg font-semibold text-slate-900 mt-2">{p.count}</p>
+              <p className="text-lg font-semibold text-ink mt-2">{p.count}</p>
               <p className="text-xs text-slate-400">{p.value.toLocaleString()}</p>
             </div>
           ))}

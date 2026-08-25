@@ -73,14 +73,14 @@ export default function CustomersClient() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">ลูกค้า</h1>
+          <h1 className="text-xl font-semibold text-ink">ลูกค้า</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             พบ {filtered.length.toLocaleString()} ราย จากทั้งหมด {customers.length.toLocaleString()} ราย
           </p>
         </div>
         <button
           onClick={openCreate}
-          className="rounded-lg bg-blue-600 text-white px-3 py-2 text-sm font-medium hover:bg-blue-700"
+          className="rounded-full bg-primary text-white px-3 py-2 text-sm font-medium hover:bg-primary-hover"
         >
           + เพิ่มลูกค้าใหม่
         </button>
@@ -92,7 +92,7 @@ export default function CustomersClient() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="ค้นหาชื่อ, บริษัท, เบอร์โทร, รหัสลูกค้า..."
-            className="flex-1 min-w-[220px] rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[220px] rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <select
             value={typeFilter}

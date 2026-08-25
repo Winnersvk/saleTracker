@@ -132,7 +132,7 @@ export default function PipelineClient() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Pipeline</h1>
+          <h1 className="text-xl font-semibold text-ink">Pipeline</h1>
           <p className="text-sm text-slate-500 mt-0.5">ลากการ์ดเพื่อเปลี่ยน Stage</p>
         </div>
         <div className="flex gap-2 items-center">
@@ -140,7 +140,7 @@ export default function PipelineClient() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="ค้นหา..."
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <label className="flex items-center gap-1.5 text-sm text-slate-600">
             <input
@@ -174,7 +174,7 @@ export default function PipelineClient() {
                   setDragOverStage(null);
                 }}
                 className={`w-72 shrink-0 rounded-2xl border-t-4 ${COLUMN_ACCENT[stage]} bg-slate-100/70 p-2 min-h-[200px] transition ${
-                  dragOverStage === stage ? "ring-2 ring-blue-400" : ""
+                  dragOverStage === stage ? "ring-2 ring-primary" : ""
                 }`}
               >
                 <div className="flex items-center justify-between px-2 py-1.5">

@@ -48,7 +48,7 @@ export default function RepDetailClient({ userId }: { userId: string }) {
         </Link>
         <div className="flex items-center justify-between flex-wrap gap-3 mt-1">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">{user.name}</h1>
+            <h1 className="text-xl font-semibold text-ink">{user.name}</h1>
             <p className="text-sm text-slate-500 mt-0.5">
               {user.email} · {ROLE_LABELS[user.role]}
               {user.team && ` · ${user.team.name}`}
@@ -109,12 +109,12 @@ export default function RepDetailClient({ userId }: { userId: string }) {
       </div>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Pipeline</h2>
+        <h2 className="text-sm font-semibold text-ink mb-3">Pipeline</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           {stats.pipelineByStage.map((p) => (
             <div key={p.stage} className="rounded-xl border border-slate-200 p-3">
               <Badge className={STAGE_COLORS[p.stage]}>{STAGE_LABELS[p.stage]}</Badge>
-              <p className="text-lg font-semibold text-slate-900 mt-2">{p.count}</p>
+              <p className="text-lg font-semibold text-ink mt-2">{p.count}</p>
               <p className="text-xs text-slate-400">{p.value.toLocaleString()}</p>
             </div>
           ))}
@@ -123,7 +123,7 @@ export default function RepDetailClient({ userId }: { userId: string }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Today&apos;s Actions</h2>
+          <h2 className="text-sm font-semibold text-ink mb-3">Today&apos;s Actions</h2>
           <ul className="space-y-2 max-h-96 overflow-y-auto">
             {stats.todaysActions.map((o) => {
               const overdueTier = o.overdueDays != null ? getOverdueTier(o.overdueDays) : null;
@@ -158,7 +158,7 @@ export default function RepDetailClient({ userId }: { userId: string }) {
         </Card>
 
         <Card className="p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">กิจกรรมล่าสุด</h2>
+          <h2 className="text-sm font-semibold text-ink mb-3">กิจกรรมล่าสุด</h2>
           <ul className="space-y-3 max-h-96 overflow-y-auto">
             {stats.recentActivities.map((a) => (
               <li key={a.id} className="text-sm border-l-2 border-slate-200 pl-3">
@@ -170,7 +170,7 @@ export default function RepDetailClient({ userId }: { userId: string }) {
                 </div>
                 <Link
                   href={`/opportunities?openId=${a.opportunity.id}`}
-                  className="text-blue-600 hover:underline text-xs"
+                  className="text-primary hover:underline text-xs"
                 >
                   {a.opportunity.name}
                 </Link>

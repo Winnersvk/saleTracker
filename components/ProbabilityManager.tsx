@@ -32,7 +32,7 @@ export default function ProbabilityManager({
 
   return (
     <Card className="p-4">
-      <h2 className="text-sm font-semibold text-slate-900 mb-1">Default Probability per Stage</h2>
+      <h2 className="text-sm font-semibold text-ink mb-1">Default Probability per Stage</h2>
       <p className="text-xs text-slate-400 mb-3">
         ใช้เป็นค่าเริ่มต้นเมื่อ Opportunity เปลี่ยน Stage (แก้ไขได้เฉพาะผู้บริหาร/ผู้ดูแลระบบ)
       </p>

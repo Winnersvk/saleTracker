@@ -67,7 +67,7 @@ export default function SettingsClient() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">ตั้งค่าระบบ</h1>
+        <h1 className="text-xl font-semibold text-ink">ตั้งค่าระบบ</h1>
         <p className="text-sm text-slate-500 mt-0.5">
           จัดการ Master Data, ทีมขาย, สิทธิ์ผู้ใช้งาน และ Probability
         </p>
@@ -86,7 +86,7 @@ export default function SettingsClient() {
                 onClick={() => setTab(t.key)}
                 className={`px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px ${
                   tab === t.key
-                    ? "border-blue-600 text-blue-700"
+                    ? "border-primary text-primary"
                     : "border-transparent text-slate-500 hover:text-slate-800"
                 }`}
               >

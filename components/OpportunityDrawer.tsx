@@ -395,7 +395,7 @@ export default function OpportunityDrawer({
       <div className="relative w-full max-w-2xl h-full bg-white shadow-xl flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-ink">
               {opportunityId ? form.name || "รายละเอียดโอกาสขาย" : "เพิ่มโอกาสขายใหม่"}
             </h2>
             {opportunity && (
@@ -425,7 +425,7 @@ export default function OpportunityDrawer({
                 <button
                   onClick={handleStageChange}
                   disabled={stageSaving || stageDraft === opportunity.stage}
-                  className="rounded-lg bg-slate-900 text-white text-xs font-medium px-3 py-1.5 hover:bg-slate-700 disabled:opacity-40"
+                  className="rounded-full bg-ink text-white text-xs font-medium px-3 py-1.5 hover:bg-slate-800 disabled:opacity-40"
                 >
                   {stageSaving ? "กำลังบันทึก..." : "เปลี่ยนสถานะ"}
                 </button>
@@ -699,7 +699,7 @@ export default function OpportunityDrawer({
           {opportunityId && opportunity && (
             <>
               <div className="border-t border-slate-200 pt-4">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                <h3 className="text-sm font-semibold text-ink mb-3">
                   ใบเสนอราคา ({opportunity.quotations?.length ?? 0})
                 </h3>
                 <form onSubmit={handleAddQuotation} className="grid grid-cols-4 gap-2 mb-3">
@@ -725,7 +725,7 @@ export default function OpportunityDrawer({
                   <button
                     type="submit"
                     disabled={qSaving || !qAmount}
-                    className="rounded-lg bg-slate-900 text-white text-xs font-medium px-2 py-1.5 hover:bg-slate-700 disabled:opacity-40"
+                    className="rounded-full bg-ink text-white text-xs font-medium px-2 py-1.5 hover:bg-slate-800 disabled:opacity-40"
                   >
                     + เพิ่ม QT
                   </button>
@@ -750,7 +750,7 @@ export default function OpportunityDrawer({
                         ) : (
                           <button
                             onClick={() => acceptQuotation(q.id)}
-                            className="text-xs text-blue-600 hover:underline"
+                            className="text-xs text-primary hover:underline"
                           >
                             ทำเครื่องหมายว่ายอมรับ
                           </button>
@@ -765,7 +765,7 @@ export default function OpportunityDrawer({
               </div>
 
               <div className="border-t border-slate-200 pt-4">
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                <h3 className="text-sm font-semibold text-ink mb-3">
                   Activity Timeline ({opportunity.activities?.length ?? 0})
                 </h3>
                 <form onSubmit={handleAddActivity} className="space-y-2 mb-3">
@@ -808,7 +808,7 @@ export default function OpportunityDrawer({
                     <button
                       type="submit"
                       disabled={actSaving}
-                      className="rounded-lg bg-slate-900 text-white text-xs font-medium px-3 py-1.5 hover:bg-slate-700 disabled:opacity-50"
+                      className="rounded-full bg-ink text-white text-xs font-medium px-3 py-1.5 hover:bg-slate-800 disabled:opacity-50"
                     >
                       {actSaving ? "กำลังบันทึก..." : "+ เพิ่ม Activity"}
                     </button>
@@ -837,7 +837,7 @@ export default function OpportunityDrawer({
 
               {opportunity.stage === "WON" && (
                 <div className="border-t border-slate-200 pt-4">
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">WINFLOW</h3>
+                  <h3 className="text-sm font-semibold text-ink mb-3">WINFLOW</h3>
                   {opportunity.winflowJob ? (
                     <div className="space-y-2">
                       <p className="text-xs text-slate-500">
@@ -874,7 +874,7 @@ export default function OpportunityDrawer({
 
               {(canReassign || opportunity.salesOwnerId === currentUserId) && (
                 <div className="border-t border-slate-200 pt-4">
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                  <h3 className="text-sm font-semibold text-ink mb-3">
                     {canReassign ? "มอบหมายใหม่" : "โอนงานให้เพื่อนร่วมทีม"}
                   </h3>
                   <form onSubmit={handleReassign} className="flex gap-2">
@@ -897,7 +897,7 @@ export default function OpportunityDrawer({
                     <button
                       type="submit"
                       disabled={reassignSaving || !reassignTo}
-                      className="rounded-lg bg-slate-900 text-white text-xs font-medium px-3 py-1.5 hover:bg-slate-700 disabled:opacity-40"
+                      className="rounded-full bg-ink text-white text-xs font-medium px-3 py-1.5 hover:bg-slate-800 disabled:opacity-40"
                     >
                       โอนงาน
                     </button>
@@ -919,7 +919,7 @@ export default function OpportunityDrawer({
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-surface"
             >
               ปิด
             </button>
@@ -927,7 +927,7 @@ export default function OpportunityDrawer({
               form="opp-form"
               type="submit"
               disabled={saving || loading}
-              className="rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+              className="rounded-full bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-primary-hover disabled:opacity-60"
             >
               {saving ? "กำลังบันทึก..." : "บันทึก"}
             </button>
