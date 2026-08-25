@@ -40,10 +40,17 @@ export async function POST(req: NextRequest) {
     userId: user.id,
     role: user.role,
     name: user.name,
+    teamId: user.teamId,
   });
 
   const res = NextResponse.json({
-    user: { id: user.id, name: user.name, role: user.role, email: user.email },
+    user: {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      email: user.email,
+      teamId: user.teamId,
+    },
   });
   const cookieOptions = await getSessionCookieOptions();
   res.cookies.set(cookieOptions.name, token, cookieOptions);

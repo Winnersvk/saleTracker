@@ -14,10 +14,13 @@ function getSecretKey() {
   return new TextEncoder().encode(secret);
 }
 
+export type Role = "SALES" | "SALES_MANAGER" | "MANAGEMENT" | "ADMIN";
+
 export type SessionPayload = {
   userId: string;
-  role: "ADMIN" | "SALES";
+  role: Role;
   name: string;
+  teamId: string | null;
 };
 
 export async function hashPassword(password: string) {
@@ -48,8 +51,9 @@ export async function verifySessionToken(
     ) {
       return {
         userId: payload.userId,
-        role: payload.role as "ADMIN" | "SALES",
+        role: payload.role as Role,
         name: payload.name,
+        teamId: typeof payload.teamId === "string" ? payload.teamId : null,
       };
     }
     return null;

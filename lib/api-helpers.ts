@@ -21,6 +21,22 @@ export async function requireAdminOrThrow(): Promise<SessionPayload> {
   return session;
 }
 
+export async function requireManagerOrAboveOrThrow(): Promise<SessionPayload> {
+  const session = await requireSessionOrThrow();
+  if (!["SALES_MANAGER", "MANAGEMENT", "ADMIN"].includes(session.role)) {
+    throw new ApiError("Forbidden", 403);
+  }
+  return session;
+}
+
+export async function requireExecutiveOrThrow(): Promise<SessionPayload> {
+  const session = await requireSessionOrThrow();
+  if (!["MANAGEMENT", "ADMIN"].includes(session.role)) {
+    throw new ApiError("Forbidden", 403);
+  }
+  return session;
+}
+
 export function handleApiError(err: unknown) {
   if (err instanceof ApiError) {
     return NextResponse.json({ error: err.message }, { status: err.status });

@@ -7,6 +7,11 @@ export async function GET() {
     return NextResponse.json({ user: null }, { status: 200 });
   }
   return NextResponse.json({
-    user: { id: session.userId, name: session.name, role: session.role },
+    user: {
+      id: session.userId,
+      name: session.name,
+      role: session.role,
+      teamId: session.teamId,
+    },
   });
 }
