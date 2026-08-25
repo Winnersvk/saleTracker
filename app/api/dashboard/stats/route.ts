@@ -29,7 +29,6 @@ export async function GET() {
       jobTypes,
       channels,
       users,
-      recentLeads,
     ] = await Promise.all([
       prisma.lead.count(),
       prisma.lead.count({ where: { isDone: true } }),
@@ -53,11 +52,6 @@ export async function GET() {
       prisma.jobType.findMany(),
       prisma.channel.findMany(),
       prisma.user.findMany({ select: { id: true, name: true } }),
-      prisma.lead.findMany({
-        select: { createdAt: true, status: true },
-        orderBy: { createdAt: "desc" },
-        take: 500,
-      }),
     ]);
 
     const jobTypeMap = new Map(jobTypes.map((j) => [j.id, j.name]));
@@ -141,18 +135,26 @@ export async function GET() {
     const conversionRate = total > 0 ? Math.round((orderedTotal / total) * 1000) / 10 : 0;
 
     // Weekly trend for the last 8 weeks based on createdAt
-    const weekBuckets: { weekStart: string; count: number }[] = [];
     const now = startOfDay(new Date());
+    const weekRanges: { weekStart: Date; weekEnd: Date }[] = [];
     for (let i = 7; i >= 0; i--) {
       const weekStart = new Date(now);
       weekStart.setDate(weekStart.getDate() - i * 7 - now.getDay());
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 7);
-      const count = recentLeads.filter(
-        (l) => l.createdAt >= weekStart && l.createdAt < weekEnd
-      ).length;
-      weekBuckets.push({ weekStart: weekStart.toISOString().slice(0, 10), count });
+      weekRanges.push({ weekStart, weekEnd });
     }
+    const weekCounts = await Promise.all(
+      weekRanges.map((w) =>
+        prisma.lead.count({
+          where: { createdAt: { gte: w.weekStart, lt: w.weekEnd } },
+        })
+      )
+    );
+    const weekBuckets = weekRanges.map((w, i) => ({
+      weekStart: w.weekStart.toISOString().slice(0, 10),
+      count: weekCounts[i],
+    }));
 
     return NextResponse.json({
       total,
