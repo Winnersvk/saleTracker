@@ -1,0 +1,111 @@
+// Winner Sale Tracker - Prisma schema
+// SQLite for zero-config, file-based storage suited to a small internal tool.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SALES
+}
+
+enum LeadStatus {
+  QUOTING     // เสนอราคา
+  CONTACTING  // กำลังติดต่อ
+  ORDERED     // สั่งงานแล้ว
+  NOT_ORDERED // บ่สั่งงาน
+}
+
+enum PriceNotifyMethod {
+  CHAT       // แจ้งราคาทางแชท
+  QUOTATION  // ใบเสนอราคา
+  ESTIMATE   // ปะเมินราคา
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(SALES)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  leads     Lead[]     @relation("AssignedLeads")
+  followUps FollowUp[]
+}
+
+model JobType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  leads Lead[]
+}
+
+model Channel {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  leads Lead[]
+}
+
+model Lead {
+  id                String             @id @default(cuid())
+  name              String
+  phone             String?
+  jobTypeId         String?
+  channelId         String?
+  contactStartDate  DateTime?
+  priceNotifyMethod PriceNotifyMethod?
+  status            LeadStatus         @default(CONTACTING)
+  priority          Priority           @default(MEDIUM)
+  notes             String?
+  isDone            Boolean            @default(false)
+  nextFollowUpDate  DateTime?
+  assignedToId      String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  jobType    JobType?   @relation(fields: [jobTypeId], references: [id])
+  channel    Channel?   @relation(fields: [channelId], references: [id])
+  assignedTo User?      @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  followUps  FollowUp[]
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([jobTypeId])
+  @@index([channelId])
+}
+
+model FollowUp {
+  id           String   @id @default(cuid())
+  leadId       String
+  note         String
+  contactedAt  DateTime @default(now())
+  resultStatus LeadStatus?
+  createdById  String?
+  createdAt    DateTime @default(now())
+
+  lead      Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdBy User? @relation(fields: [createdById], references: [id])
+
+  @@index([leadId])
+}

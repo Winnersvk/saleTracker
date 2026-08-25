@@ -1,0 +1,38 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import {
+  requireSessionOrThrow,
+  requireAdminOrThrow,
+  handleApiError,
+} from "@/lib/api-helpers";
+import { upsertNamedEntitySchema } from "@/lib/validators";
+
+export async function GET() {
+  try {
+    await requireSessionOrThrow();
+    const channels = await prisma.channel.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+    return NextResponse.json({ channels });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    await requireAdminOrThrow();
+    const body = await req.json().catch(() => null);
+    const parsed = upsertNamedEntitySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" },
+        { status: 400 }
+      );
+    }
+    const channel = await prisma.channel.create({ data: parsed.data });
+    return NextResponse.json({ channel }, { status: 201 });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
