@@ -1,22 +1,28 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import type { UserRecord } from "@/lib/types";
+import type { Team, UserRecord } from "@/lib/types";
+import { ROLE_LABELS } from "@/lib/pipeline";
 import { Card } from "@/components/ui";
+
+type Role = "SALES" | "SALES_MANAGER" | "MANAGEMENT" | "ADMIN";
 
 export default function UsersManager({
   users,
+  teams,
   currentUserId,
   onChanged,
 }: {
   users: UserRecord[];
+  teams: Team[];
   currentUserId: string;
   onChanged: () => void;
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"ADMIN" | "SALES">("SALES");
+  const [role, setRole] = useState<Role>("SALES");
+  const [teamId, setTeamId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +34,7 @@ export default function UsersManager({
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, teamId: teamId || null }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -39,6 +45,7 @@ export default function UsersManager({
       setEmail("");
       setPassword("");
       setRole("SALES");
+      setTeamId("");
       onChanged();
     } finally {
       setSaving(false);
@@ -55,7 +62,7 @@ export default function UsersManager({
     onChanged();
   }
 
-  async function changeRole(u: UserRecord, newRole: "ADMIN" | "SALES") {
+  async function changeRole(u: UserRecord, newRole: Role) {
     await fetch(`/api/users/${u.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -64,14 +71,21 @@ export default function UsersManager({
     onChanged();
   }
 
+  async function changeTeam(u: UserRecord, newTeamId: string) {
+    await fetch(`/api/users/${u.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teamId: newTeamId || null }),
+    });
+    onChanged();
+  }
+
   return (
     <Card className="p-4">
-      <h2 className="text-sm font-semibold text-slate-900 mb-3">
-        ผู้ใช้งานระบบ
-      </h2>
+      <h2 className="text-sm font-semibold text-slate-900 mb-3">ผู้ใช้งานระบบ</h2>
       <form
         onSubmit={addUser}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mb-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mb-4"
       >
         <input
           required
@@ -98,11 +112,22 @@ export default function UsersManager({
         />
         <select
           value={role}
-          onChange={(e) => setRole(e.target.value as "ADMIN" | "SALES")}
+          onChange={(e) => setRole(e.target.value as Role)}
           className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         >
-          <option value="SALES">พนักงานขาย</option>
-          <option value="ADMIN">ผู้ดูแลระบบ</option>
+          {Object.entries(ROLE_LABELS).map(([v, l]) => (
+            <option key={v} value={v}>{l}</option>
+          ))}
+        </select>
+        <select
+          value={teamId}
+          onChange={(e) => setTeamId(e.target.value)}
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          <option value="">ไม่มีทีม</option>
+          {teams.map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
         </select>
         <button
           type="submit"
@@ -120,6 +145,7 @@ export default function UsersManager({
               <th className="py-2 pr-4">ชื่อ</th>
               <th className="py-2 pr-4">อีเมล</th>
               <th className="py-2 pr-4">บทบาท</th>
+              <th className="py-2 pr-4">ทีม</th>
               <th className="py-2 pr-4">งานที่ดูแล</th>
               <th className="py-2 pr-4">สถานะ</th>
               <th className="py-2 pr-4"></th>
@@ -135,18 +161,27 @@ export default function UsersManager({
                 <td className="py-2 pr-4">
                   <select
                     value={u.role}
-                    onChange={(e) =>
-                      changeRole(u, e.target.value as "ADMIN" | "SALES")
-                    }
+                    onChange={(e) => changeRole(u, e.target.value as Role)}
                     className="rounded-lg border border-slate-300 px-2 py-1 text-xs bg-white"
                   >
-                    <option value="SALES">พนักงานขาย</option>
-                    <option value="ADMIN">ผู้ดูแลระบบ</option>
+                    {Object.entries(ROLE_LABELS).map(([v, l]) => (
+                      <option key={v} value={v}>{l}</option>
+                    ))}
                   </select>
                 </td>
-                <td className="py-2 pr-4 text-slate-600">
-                  {u._count?.opportunities ?? 0}
+                <td className="py-2 pr-4">
+                  <select
+                    value={u.teamId ?? ""}
+                    onChange={(e) => changeTeam(u, e.target.value)}
+                    className="rounded-lg border border-slate-300 px-2 py-1 text-xs bg-white"
+                  >
+                    <option value="">ไม่มีทีม</option>
+                    {teams.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
                 </td>
+                <td className="py-2 pr-4 text-slate-600">{u._count?.opportunities ?? 0}</td>
                 <td className="py-2 pr-4">
                   {u.active ? (
                     <span className="text-emerald-600 text-xs">ใช้งานอยู่</span>
