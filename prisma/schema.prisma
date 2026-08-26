@@ -13,14 +13,15 @@
 // data has no real analog for, per the spec's own "Simple for Sales"
 // principle (Section 59).
 //
-// SQLite for zero-config, file-based storage suited to a small internal tool.
+// Postgres in production (Vercel Postgres / Neon) - see README for the
+// hosted setup and deploy steps.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

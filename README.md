@@ -101,12 +101,15 @@ Dashboard (ข้อ 41), **การโอนงานด้วยตนเอ�
 ## เทคโนโลยีที่ใช้
 
 - [Next.js 16](https://nextjs.org) (App Router) + TypeScript + Tailwind CSS
-- [Prisma](https://www.prisma.io) + SQLite (ไฟล์ฐานข้อมูลเดียว เหมาะกับ
-  องค์กรขนาดเล็ก — ย้ายไป PostgreSQL/MySQL ภายหลังได้ง่ายผ่าน Prisma)
+- [Prisma](https://www.prisma.io) + PostgreSQL (Vercel Postgres / Neon
+  แนะนำสำหรับ production; local dev ใช้ Postgres ในเครื่องหรือ Docker ก็ได้)
 - Recharts สำหรับกราฟในทุกแดชบอร์ด
 - Session cookie + JWT (jose), รหัสผ่านเข้ารหัสด้วย bcrypt
 
 ## เริ่มต้นใช้งาน (Local Development)
+
+> ต้องมี PostgreSQL ให้เชื่อมต่อก่อน (local Postgres ที่ติดตั้งเอง หรือรันผ่าน
+> Docker: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16`)
 
 ```bash
 npm install                 # ติดตั้ง dependencies (รัน `prisma generate` อัตโนมัติ)
@@ -140,7 +143,7 @@ npm run dev                 # เปิดเซิร์ฟเวอร์ท�
 | `npm run dev` | รันเซิร์ฟเวอร์สำหรับพัฒนา |
 | `npm run build` | build สำหรับ production |
 | `npm run start` | รันเซิร์ฟเวอร์ production (ต้อง build ก่อน) |
-| `npm run db:push` | sync schema กับฐานข้อมูล SQLite |
+| `npm run db:push` | sync schema กับฐานข้อมูล PostgreSQL |
 | `npm run db:seed` | นำเข้าข้อมูลตั้งต้นจาก `prisma/seed-data.json` (ปลอดภัยรันซ้ำ) |
 | `npm run db:studio` | เปิด Prisma Studio ดู/แก้ข้อมูลในฐานข้อมูลโดยตรง |
 
@@ -155,6 +158,37 @@ npm run dev                 # เปิดเซิร์ฟเวอร์ท�
 - `/executive-dashboard` — **Executive Dashboard** พร้อมตัวกรองช่วงเวลา + พนักงานขาย และกราฟเปรียบเทียบทีม (MANAGEMENT ขึ้นไป)
 - `/audit-log` — ประวัติการเปลี่ยนแปลงข้อมูลสำคัญ (MANAGEMENT ขึ้นไป)
 - `/settings` — Master Data, ทีมขาย, Probability, ผู้ใช้งาน, แจ้งเตือน LINE (ADMIN/MANAGEMENT)
+
+## Deploy ขึ้น Vercel
+
+1. **สร้างฐานข้อมูล**: ในหน้า Vercel project ไปที่แท็บ **Storage → Create
+   Database** เลือก **Postgres** (Neon) — Vercel จะสร้างและผูก
+   `DATABASE_URL` ให้อัตโนมัติในทุก Environment
+2. **Import repo**: ไปที่ [vercel.com/new](https://vercel.com/new) เลือก
+   repo `saleTracker` แล้วตั้ง Root Directory / Framework Preset เป็น
+   Next.js (ค่าเริ่มต้น)
+3. **ตั้ง Environment Variables** (Project Settings → Environment Variables):
+   - `SESSION_SECRET` — สุ่มด้วยคำสั่งด้านบน
+   - `CRON_SECRET` — สุ่มเช่นกัน (ใช้กับ Vercel Cron ด้านล่าง)
+   - `DATABASE_URL` — ถ้าสร้างฐานข้อมูลผ่าน Vercel Storage แล้วจะถูกเติมให้อัตโนมัติ
+4. **กด Deploy** — build แรกจะรัน `prisma generate` ให้อัตโนมัติผ่าน
+   `postinstall`, แต่ยังไม่สร้างตารางในฐานข้อมูล
+5. **สร้างตาราง + ผู้ใช้แรกในฐานข้อมูล production**: ดึง `DATABASE_URL` ของ
+   production มาจาก Vercel dashboard แล้วรันจากเครื่อง local (ครั้งเดียว):
+
+   ```bash
+   DATABASE_URL="<production connection string>" npx prisma db push
+   DATABASE_URL="<production connection string>" npx prisma db seed
+   ```
+
+   (หรือข้าม seed แล้วสร้างผู้ใช้ ADMIN คนแรกเองผ่าน Prisma Studio/SQL — seed
+   จะนำเข้าข้อมูลลูกค้า/โอกาสขายจาก Excel เดิมด้วย ถ้าไม่ต้องการให้ข้ามขั้นนี้)
+6. **แจ้งเตือน LINE อัตโนมัติทุกวัน**: repo นี้มี `vercel.json` ตั้ง Vercel
+   Cron ยิง `/api/cron/daily-summary` ให้แล้ว (เวลา 16:00 UTC = 23:00 ไทย,
+   แก้ schedule ในไฟล์ได้ตามต้องการ) — Vercel จะแนบ
+   `Authorization: Bearer $CRON_SECRET` ให้อัตโนมัติเมื่อยิง cron ตราบใดที่ตั้ง
+   env var `CRON_SECRET` ไว้ตามข้อ 3 ไม่ต้องตั้ง cron ภายนอกเพิ่มถ้า deploy บน
+   Vercel (Hobby plan รองรับ cron ความถี่สูงสุดวันละ 1 ครั้ง ซึ่งพอดีกับการใช้งานนี้)
 
 ## การโอนงาน (Transfer)
 
@@ -183,8 +217,11 @@ Assignment History และ Audit Log เสมอ (ใครโอน โอ�
 
 ### ตั้งเวลาส่งอัตโนมัติทุกวัน
 
-ระบบเองไม่มี cron ในตัว (เป็นเว็บแอปทั่วไป ไม่ใช่ serverless ที่มี cron built-in)
-ต้องตั้งค่าตัวจับเวลาจากภายนอกให้เรียก endpoint นี้วันละครั้ง:
+> ถ้า deploy บน Vercel ตาม [Deploy ขึ้น Vercel](#deploy-ขึ้น-vercel) ด้านบน
+> ไม่ต้องทำขั้นตอนนี้เพิ่ม — `vercel.json` ตั้ง Vercel Cron ให้แล้ว
+
+สำหรับ hosting อื่นที่ไม่มี cron ในตัว ต้องตั้งค่าตัวจับเวลาจากภายนอกให้เรียก
+endpoint นี้วันละครั้งเอง:
 
 ```
 POST https://<โดเมนของคุณ>/api/cron/daily-summary?secret=<CRON_SECRET>
@@ -208,6 +245,6 @@ POST https://<โดเมนของคุณ>/api/cron/daily-summary?secret=<
   Pipeline ในแดชบอร์ดจะเป็น 0 จนกว่าฝ่ายขายจะเริ่มกรอกมูลค่าจริงของแต่ละ
   โอกาสขายไปข้างหน้า
 - `prisma/seed-data.json` คือข้อมูลที่แปลงมาจาก `AoyWinnerTracker.xlsx` ใช้
-  สำหรับ `npm run db:seed` เท่านั้น ฐานข้อมูลจริง (`prisma/dev.db`) จะไม่ถูก
-  commit เข้า git (`.gitignore`) — ย้ายไปใช้งานจริงบนเซิร์ฟเวอร์อื่นให้รัน
-  `db:push` และ `db:seed` อีกครั้งบนเครื่องปลายทาง
+  สำหรับ `npm run db:seed` เท่านั้น — ย้ายไปใช้งานจริงบนฐานข้อมูลอื่น (เช่น
+  production บน Vercel) ให้รัน `db:push` และ `db:seed` อีกครั้งชี้ไปที่
+  `DATABASE_URL` ปลายทางนั้น (ดู [Deploy ขึ้น Vercel](#deploy-ขึ้น-vercel))
